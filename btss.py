@@ -1,46 +1,60 @@
+import os
 from openai import OpenAI
+
+# 1. Gufata API Key mu buryo bw'umutekano (Environment Variable cyangwa ikoresha iy'agateganyo)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
 
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
-    api_key="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"
+    api_key=GROQ_API_KEY
 )
 
+def clean_response(text: str) -> str:
+    """Igafasha gukora isuku ku bisubizo bya AI niba harimo ama-tag ya reasoning/thinking."""
+    if "</think>" in text:
+        text = text.split("</think>")[-1]
+    return text.replace("<think>", "").strip()
+
 def kora_groq_ai():
-    print("=== Bulinga TSS Assistant is Ready Now! Write ' Quit' or 'exit' to Stop. ===")
+    print("=========================================================================")
+    print("=== Bulinga TSS Assistant is Ready! Write 'exit', 'quit', or 'sohora' ===")
+    print("=========================================================================")
     
-    # System Prompt ivuguruwe yibanda gusa kuri Bulinga TSS iherereye muri Mushishiro, yakozwe na Developer Kevin
+    # System Prompt ikosoye kandi isobanutse neza
     messages_historike = [
         {
             "role": "system", 
             "content": (
-                "You are an official AI assistant for Bulinga TSS, a TVET school located in MUHANGA District at in Mushishiro Sector. "
-                "You were built and created by Developer Kevin on July 25, 2026, in the afternoon. "
-                "STRICT RULE: You are ONLY allowed to know, discuss, and answer questions related to Bulinga TSS "
-                "(such as courses offered, admission requirements, school location in Mushishiro, timetables, fees, exams, and school activities). "
-                "If a user asks about who built you, state that you were created by Developer Kevin on July 25, 2026, in the afternoon. "
-                "If a user asks about anything else outside Bulinga TSS (like general knowledge, coding tutorials, politics, movies, etc.), "
-                "you must politely refuse and state that you only have information about Bulinga TSS. "
-                "You can reply in Kinyarwanda or English depending on the user's language."
-                "You must also say thank you 👍 for those who was interact you ."
+                "You are the official AI assistant for Bulinga TSS, a TVET school located in Muhanga District, Mushishiro Sector.\n"
+                "You were built and created by Developer Kevin on July 25, 2026, in the afternoon.\n\n"
+                "STRICT RULES:\n"
+                "1. You are ONLY allowed to answer questions related to Bulinga TSS "
+                "(such as trades/courses offered, admission, location in Mushishiro, timetables, fees, exams, and school life).\n"
+                "2. If asked who built or created you, state clearly that you were created by Developer Kevin on July 25, 2026, in the afternoon.\n"
+                "3. If a user asks about anything outside Bulinga TSS (general knowledge, coding, politics, entertainment, etc.), "
+                "politely refuse and state that your expertise is strictly limited to Bulinga TSS.\n"
+                "4. Respond fluently in Kinyarwanda or English depending on the user's input.\n"
+                "5. Keep responses concise, warm, helpful, and courteous. Always remember to thank the user 👍 for interacting with you."
             )
         }
     ]
     
     while True:
-        ikibazo = input("\nAsk a question: ")
-        
-        if ikibazo.lower() in ["sohora", "exit", "quit"]:
-            print(",Thank you my Friend👍! Goodbye🙋‍♂️👋")
-            break
-            
-        if not ikibazo.strip():
-            continue
-            
         try:
-            # Twongeramo ikibazo cy'umukoresha
+            ikibazo = input("\nAsk a question (Bulinga TSS): ").strip()
+            
+            # Gusoza ikiganiro
+            if ikibazo.lower() in ["sohora", "exit", "quit", "q"]:
+                print("\nThank you my Friend 👍! Goodbye 🙋‍♂️👋")
+                break
+                
+            if not ikibazo:
+                continue
+                
+            # Kwongeramo ikibazo cy'umukoresha muri historique
             messages_historike.append({"role": "user", "content": ikibazo})
             
-            # Kohereza ubutumwa muri Groq
+            # Kohereza ubutumwa kuri Groq API
             completion = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=messages_historike,
@@ -48,17 +62,21 @@ def kora_groq_ai():
                 max_tokens=1024
             )
             
-            # Gufata igisubizo cya AI
-            igisubizo_cya_ai = completion.choices[0].message.content
+            # Gufata no gukora isuku ku gisubizo
+            raw_content = completion.choices[0].message.content
+            ibisubizo_bipfunyitse = clean_response(raw_content)
             
             print("\nAI Response:")
-            print(igisubizo_cya_ai)
+            print(ibisubizo_bipfunyitse)
             
             # Kwongera igisubizo muri historique
-            messages_historike.append({"role": "assistant", "content": igisubizo_cya_ai})
+            messages_historike.append({"role": "assistant", "content": ibisubizo_bipfunyitse})
             
+        except KeyboardInterrupt:
+            print("\n\nSession closed. Goodbye 👋")
+            break
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"\n⚠️ An error occurred: {e}")
 
 if __name__ == "__main__":
     kora_groq_ai()
