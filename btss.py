@@ -10,22 +10,25 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. CUSTOM CSS (SOFT & SMOOTH BACKGROUND) & JAVASCRIPT (POPUP ALERT)
+# 2. CUSTOM CSS (BTSS.PNG SOFT WATERMARK BACKGROUND) & JAVASCRIPT (POPUP ALERT)
 st.markdown(
     """
-   <style>
-    @keyframes softRainbowBg {{
-        0% {{ background-color: rgba(26, 26, 46, 0.88); }}
-        25% {{ background-color: rgba(35, 22, 38, 0.88); }}
-        50% {{ background-color: rgba(22, 32, 44, 0.88); }}
-        75% {{ background-color: rgba(36, 22, 30, 0.88); }}
-        100% {{ background-color: rgba(26, 26, 46, 0.88); }}
-    }}
-
-
-    .stApp {
-        /* Irahinduka mu buryo buhoro cyane mu masogonda 35 (35s) */
-        animation: softRainbowGlow 35s infinite ease-in-out;
+    <style>
+    /* Background Watermark ya logo ya btss.png */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image: url('btss.png');
+        background-size: 380px; /* Ubunini bwa logo iri mu background */
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0.08; /* Umweru/igicucu cyoroshye cyane ku buryo itapika mu maso */
+        z-index: -1;
+        pointer-events: none;
     }
     </style>
 
@@ -122,7 +125,7 @@ SYSTEM_PROMPT = (
 )
 
 st.title("🏫 Bulinga TSS AI Assistant")
-st.write("Official Assistant for Bulinga TSS located in Muhanga, Mushishiro.")
+st.write("Official Assistant for Bulinga TSS located in Mushishiro, Muhanga.")
 
 # 4. SESSION STATE FOR CHAT
 if "messages" not in st.session_state:
@@ -138,13 +141,13 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
 
 # 5. CHAT INPUT
-if prompt := st.chat_input("Ask related Bulinga TSS..."):
+if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     try:
-        with st.spinner("Bulinga TSS AI thinking...."):
+        with st.spinner("Bulinga TSS AI irimo gushaka no gutekereza..."):
             
             # Kora Search binyuze muri Tavily niba ikibazo kirimo amagambo ya NESA
             live_data = get_live_nesa_search(prompt)
@@ -175,4 +178,4 @@ if prompt := st.chat_input("Ask related Bulinga TSS..."):
             st.markdown(answer)
             
     except Exception as e:
-        st.error(f"Error Detected !!: {e}")
+        st.error(f"Harimo ikosa: {e}")
