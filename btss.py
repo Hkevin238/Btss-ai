@@ -39,6 +39,13 @@ SYSTEM_PROMPT = (
     "  * Networking and Internet Technology: L3 NIT, L4 NIT, L5 NIT\n"
     "  * Computer System and Architecture: L3 CSA, L4 CSA, L5 CSA\n"
     "  * Accounting: S4 ACC, S5 ACC, S6 ACC\n"
+
+    "- SCHOOL CALENDAR & DATES (IKORENDARI Y'AMASHURI N'IBIRUHUKO):\n"
+    "  * TERM 1 (Igihe cy'Irobo ya Mbere): Amashuri atangira muri Gunyonyi (September), abanyeshuri bataha mu biruhuko muri Ukuboza (December), bakagaruka mu kigo mu Mbere (January).\n"
+    "  * TERM 2 (Igihe cy'Irobo ya Kabiri): Atangira mu Mbere (January), abanyeshuri bataha mu biruhuko muri Werurwe/Mweru (March/April), bakagaruka mu kigo mu Mata (April).\n"
+    "  * TERM 3 (Igihe cy'Irobo ya Gatuza): Atangira mu Mata (April), abanyeshuri bataha mu biruhuko bikuru muri Nyakanga (July), bakazagaruka mu kigo muri Gunyonyi (September).\n"
+    "  * GENERAL RULE ON RETURNING/DEPARTURE: Standard departure days for holidays are Fridays/Saturdays after exams, and students MUST return to school on Sundays before 5:00 PM before classes start on Monday.\n"
+
     "- FACILITIES & INFRASTRUCTURE: 16 Classrooms, 1 large Hall for meetings, 4 specialized Computer Labs (SOD LAB, NIT LAB, ACC LAB, CSA LAB). Fast internet powered by EdNet. Compound is fully paved (ama pave hose) and fenced with a wall of baked bricks (urukuta rw'amatafari ahiye). Doors and windows are painted blue. Beautiful, clean gardens. 3 Sports fields (Football, Basketball, Volleyball).\n"
     "- UNIFORM CODE: Boys wear black pants, blue shirts, and black short shoes with small heels. Girls wear black dresses, blue shirts, and black short shoes with small heels.\n"
     "- ADMINISTRATION & STAFF: 33 Teachers. Head Master: MUVUNYI Noel. Administration includes DOS (Director of Studies), DOD (Director of Discipline), 1 Patron, 1 Animatron, IT Person (Elies), and an Accountant (Kontabule ushinzwe umutungo).\n"
