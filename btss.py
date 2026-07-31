@@ -13,16 +13,15 @@ st.set_page_config(
 # 2. CUSTOM CSS (SOFT & SMOOTH BACKGROUND) & JAVASCRIPT (POPUP ALERT)
 st.markdown(
     """
-    <style>
-    /* Animation y'amabara yoroshye cyane atapika mu maso (Soft Pastel Glow) */
-    @keyframes softRainbowGlow {
-        0%   { background-color: #fdf2f2; } /* Umutuku woroshye cyane */
-        5%  { background-color: #fdf8f2; } /* Umuhondo woroshye */
-        10%  { background-color: #f2fdf4; } /* Icyatsi cyoroshye */
-        20%  { background-color: #f2fbfd; } /* Ubururu bworoshye */
-        30%  { background-color: #f6f2fd; } /* Violet yoroshye */
-        40% { background-color: #fdf2f2; }
-    }
+   <style>
+    @keyframes softRainbowBg {{
+        0% {{ background-color: rgba(26, 26, 46, 0.88); }}
+        25% {{ background-color: rgba(35, 22, 38, 0.88); }}
+        50% {{ background-color: rgba(22, 32, 44, 0.88); }}
+        75% {{ background-color: rgba(36, 22, 30, 0.88); }}
+        100% {{ background-color: rgba(26, 26, 46, 0.88); }}
+    }}
+
 
     .stApp {
         /* Irahinduka mu buryo buhoro cyane mu masogonda 35 (35s) */
