@@ -10,7 +10,38 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. API KEYS SETUP
+# 2. CUSTOM CSS (RAINBOW BACKGROUND) & JAVASCRIPT (POPUP ALERT)
+st.markdown(
+    """
+    <style>
+    /* Animation y'amabara y'umukororobya (Rainbow Background) */
+    @keyframes rainbowGlow {
+        0%   { background-color: #ffadad; }
+        14%  { background-color: #ffd6a5; }
+        28%  { background-color: #fdffb6; }
+        42%  { background-color: #caffbf; }
+        57%  { background-color: #9bf6ff; }
+        71%  { background-color: #a0c4ff; }
+        85%  { background-color: #bdb2ff; }
+        100% { background-color: #ffadad; }
+    }
+
+    .stApp {
+        animation: rainbowGlow 15s infinite alternate ease-in-out;
+    }
+    </style>
+
+    <script>
+    // Popup Alert buri masogonda 5 (5000 milliseconds)
+    setInterval(function() {
+        alert("Enjoy for using BULINGA TSS AI !!");
+    }, 5000);
+    </script>
+    """,
+    unsafe_allow_html=True
+)
+
+# 3. API KEYS SETUP
 try:
     groq_api_key = st.secrets["GROQ_API_KEY"]
 except Exception:
@@ -19,7 +50,6 @@ except Exception:
 try:
     tavily_api_key = st.secrets["TAVILY_API_KEY"]
 except Exception:
-    # API Key yawe ya Tavily yavuye ku rubuga:
     tavily_api_key = "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" 
 
 client = OpenAI(
@@ -41,7 +71,6 @@ def get_live_nesa_search(query: str) -> str:
     if not tavily_client:
         return ""
     
-    # Amagambo ashobora gukura amakuru kuri Tavily
     keywords = ["nesa", "itangira", "gutaha", "kugaruka", "ibiruhuko", "itangazo", "calendar", "igikuba", "mineduc"]
     
     if any(word in query.lower() for word in keywords):
@@ -53,7 +82,7 @@ def get_live_nesa_search(query: str) -> str:
             results = [r['content'] for r in search_result.get('results', [])]
             if results:
                 return "\n\n[LIVE SEARCH DATA FROM NESA/MINEDUC]:\n" + "\n".join(results)
-        except Exception as e:
+        except Exception:
             return ""
     return ""
 
@@ -97,19 +126,20 @@ SYSTEM_PROMPT = (
 st.title("🏫 Bulinga TSS AI Assistant")
 st.write("Official Assistant for Bulinga TSS located in Mushishiro, Muhanga.")
 
-# 3. SESSION STATE FOR CHAT
+# 4. SESSION STATE FOR CHAT
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": SYSTEM_PROMPT}
     ]
 
-# Display chat history
+# Display chat history (Koresha btss.png nka Avatar ku bisubizo bya assistant)
 for message in st.session_state.messages:
     if message["role"] != "system":
-        with st.chat_message(message["role"]):
+        avatar_img = "btss.png" if message["role"] == "assistant" else None
+        with st.chat_message(message["role"], avatar=avatar_img):
             st.markdown(message["content"])
 
-# 4. CHAT INPUT
+# 5. CHAT INPUT
 if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -118,10 +148,9 @@ if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
     try:
         with st.spinner("Bulinga TSS AI irimo gushaka no gutekereza..."):
             
-            # 1. Kora Search binyuze muri Tavily niba ikibazo kirimo amagambo ya NESA
+            # Kora Search binyuze muri Tavily niba ikibazo kirimo amagambo ya NESA
             live_data = get_live_nesa_search(prompt)
             
-            # 2. Tegura amakuru ajya muri Groq AI
             current_messages = list(st.session_state.messages)
             if live_data:
                 current_messages[-1] = {
@@ -142,7 +171,9 @@ if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
             answer = answer.replace("<think>", "").strip()
 
         st.session_state.messages.append({"role": "assistant", "content": answer})
-        with st.chat_message("assistant"):
+        
+        # Baza igisubizo cya assistant uherekeje na logo ya btss.png
+        with st.chat_message("assistant", avatar="btss.png"):
             st.markdown(answer)
             
     except Exception as e:
