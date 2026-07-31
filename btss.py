@@ -150,7 +150,7 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
 
 # 6. CHAT INPUT
-if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
+if prompt := st.chat_input("Ask related Bulinga TSS..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
