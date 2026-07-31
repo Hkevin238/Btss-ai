@@ -122,7 +122,7 @@ SYSTEM_PROMPT = (
 )
 
 st.title("🏫 Bulinga TSS AI Assistant")
-st.write("Official Assistant for Bulinga TSS located in Mushishiro, Muhanga.")
+st.write("Official Assistant for Bulinga TSS located in Muhanga, Mushishiro.")
 
 # 4. SESSION STATE FOR CHAT
 if "messages" not in st.session_state:
@@ -138,13 +138,13 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
 
 # 5. CHAT INPUT
-if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
+if prompt := st.chat_input("Ask related Bulinga TSS..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     try:
-        with st.spinner("Bulinga TSS AI irimo gushaka no gutekereza..."):
+        with st.spinner("Bulinga TSS AI thinking...."):
             
             # Kora Search binyuze muri Tavily niba ikibazo kirimo amagambo ya NESA
             live_data = get_live_nesa_search(prompt)
@@ -175,4 +175,4 @@ if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
             st.markdown(answer)
             
     except Exception as e:
-        st.error(f"Harimo ikosa: {e}")
+        st.error(f"Error Detected !!: {e}")
