@@ -1,3 +1,4 @@
+import base64
 import os
 import streamlit as st
 from openai import OpenAI
@@ -6,43 +7,51 @@ from tavily import TavilyClient
 # 1. PAGE CONFIG
 st.set_page_config(
     page_title="Bulinga TSS AI",
-    page_icon="🏫",
+    page_icon="btss.png",
     layout="centered"
 )
 
-# 2. CUSTOM CSS (BTSS.PNG SOFT WATERMARK BACKGROUND) & JAVASCRIPT (POPUP ALERT)
-st.markdown(
-    """
-    <style>
-    /* Background Watermark ya logo ya btss.png */
-    .stApp::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-image: url('btss.png');
-        background-size: 380px; /* Ubunini bwa logo iri mu background */
-        background-position: center;
-        background-repeat: no-repeat;
-        opacity: 0.08; /* Umweru/igicucu cyoroshye cyane ku buryo itapika mu maso */
-        z-index: -1;
-        pointer-events: none;
-    }
-    </style>
+# 2. FUNCTION BWO GUHINDURA IFOTO MO BASE64 KU ZERA MURI BACKGROUND
+def get_base64_image(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    return ""
 
-    <script>
-    // Popup Alert buri masogonda 5 (5000 milliseconds)
-    setInterval(function() {
-        alert("Enjoy for using BULINGA TSS AI !!");
-    }, 5000);
-    </script>
-    """,
-    unsafe_allow_html=True
-)
+# Ifata kode ya base64 y'ifoto ya btss.png
+img_base64 = get_base64_image("btss.png")
 
-# 3. API KEYS SETUP
+# 3. CUSTOM CSS (BTSS.PNG BASE64 WATERMARK BACKGROUND) & JAVASCRIPT
+bg_css = f"""
+<style>
+.stApp::before {{
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('data:image/png;base64,{img_base64}');
+    background-size: 380px; /* Ubunini bwa logo */
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.12; /* Umweru/igicucu cyoroshye gusa ngo itagupikira mu maso */
+    z-index: -1;
+    pointer-events: none;
+}}
+</style>
+
+<script>
+// Popup Alert buri masogonda 5 (5000 milliseconds)
+setInterval(function() {{
+    alert("Enjoy for using BULINGA TSS AI !!");
+}}, 5000);
+</script>
+"""
+
+st.markdown(bg_css, unsafe_allow_html=True)
+
+# 4. API KEYS SETUP
 try:
     groq_api_key = st.secrets["GROQ_API_KEY"]
 except Exception:
@@ -125,29 +134,29 @@ SYSTEM_PROMPT = (
 )
 
 st.title("🏫 Bulinga TSS AI Assistant")
-st.write("Official Assistant for Bulinga TSS located in Mushishiro, Muhanga.")
+st.write("Official Assistant for Bulinga TSS located in Muhanga , Mushishiro.")
 
-# 4. SESSION STATE FOR CHAT
+# 5. SESSION STATE FOR CHAT
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": SYSTEM_PROMPT}
     ]
 
-# Display chat history (Koresha btss.png nka Avatar ku bisubizo bya assistant)
+# Display chat history
 for message in st.session_state.messages:
     if message["role"] != "system":
         avatar_img = "btss.png" if message["role"] == "assistant" else None
         with st.chat_message(message["role"], avatar=avatar_img):
             st.markdown(message["content"])
 
-# 5. CHAT INPUT
+# 6. CHAT INPUT
 if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     try:
-        with st.spinner("Bulinga TSS AI irimo gushaka no gutekereza..."):
+        with st.spinner("Bulinga TSS AI thinking...."):
             
             # Kora Search binyuze muri Tavily niba ikibazo kirimo amagambo ya NESA
             live_data = get_live_nesa_search(prompt)
@@ -173,7 +182,6 @@ if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
 
         st.session_state.messages.append({"role": "assistant", "content": answer})
         
-        # Baza igisubizo cya assistant uherekeje na logo ya btss.png
         with st.chat_message("assistant", avatar="btss.png"):
             st.markdown(answer)
             
