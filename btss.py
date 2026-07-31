@@ -17,11 +17,11 @@ st.markdown(
     /* Animation y'amabara yoroshye cyane atapika mu maso (Soft Pastel Glow) */
     @keyframes softRainbowGlow {
         0%   { background-color: #fdf2f2; } /* Umutuku woroshye cyane */
-        20%  { background-color: #fdf8f2; } /* Umuhondo woroshye */
-        40%  { background-color: #f2fdf4; } /* Icyatsi cyoroshye */
-        60%  { background-color: #f2fbfd; } /* Ubururu bworoshye */
-        80%  { background-color: #f6f2fd; } /* Violet yoroshye */
-        100% { background-color: #fdf2f2; }
+        5%  { background-color: #fdf8f2; } /* Umuhondo woroshye */
+        10%  { background-color: #f2fdf4; } /* Icyatsi cyoroshye */
+        20%  { background-color: #f2fbfd; } /* Ubururu bworoshye */
+        30%  { background-color: #f6f2fd; } /* Violet yoroshye */
+        40% { background-color: #fdf2f2; }
     }
 
     .stApp {
