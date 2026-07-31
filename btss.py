@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 from openai import OpenAI
+from tavily import TavilyClient
 
 # 1. PAGE CONFIG
 st.set_page_config(
@@ -9,16 +10,53 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. API KEY SETUP
+# 2. API KEYS SETUP
 try:
     groq_api_key = st.secrets["GROQ_API_KEY"]
 except Exception:
     groq_api_key = "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"
 
+try:
+    tavily_api_key = st.secrets["TAVILY_API_KEY"]
+except Exception:
+    # API Key yawe ya Tavily yavuye ku rubuga:
+    tavily_api_key = "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" 
+
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
     api_key=groq_api_key
 )
+
+# Tangiza Tavily Client
+tavily_client = None
+if tavily_api_key:
+    try:
+        tavily_client = TavilyClient(api_key=tavily_api_key)
+    except Exception:
+        tavily_client = None
+
+
+def get_live_nesa_search(query: str) -> str:
+    """Ifata amakuru agezweho kuri Google/NESA binyuze muri Tavily niba ikibazo kijyanye no bataha/itangira"""
+    if not tavily_client:
+        return ""
+    
+    # Amagambo ashobora gukura amakuru kuri Tavily
+    keywords = ["nesa", "itangira", "gutaha", "kugaruka", "ibiruhuko", "itangazo", "calendar", "igikuba", "mineduc"]
+    
+    if any(word in query.lower() for word in keywords):
+        try:
+            search_result = tavily_client.search(
+                query=f"NESA Rwanda school calendar official updates {query}",
+                max_results=2
+            )
+            results = [r['content'] for r in search_result.get('results', [])]
+            if results:
+                return "\n\n[LIVE SEARCH DATA FROM NESA/MINEDUC]:\n" + "\n".join(results)
+        except Exception as e:
+            return ""
+    return ""
+
 
 SYSTEM_PROMPT = (
     "You are the official AI assistant for Bulinga TSS (Bulinga TVET School), located in Muhanga District, Mushishiro Sector.\n"
@@ -40,44 +78,20 @@ SYSTEM_PROMPT = (
     "  * Computer System and Architecture: L3 CSA, L4 CSA, L5 CSA\n"
     "  * Accounting: S4 ACC, S5 ACC, S6 ACC\n"
 
-    "- SCHOOL CALENDAR & DATES (IKORENDARI Y'AMASHURI N'IBIRUHUKO):\n"
-    "  * TERM 1 (Igihe cy'Irobo ya Mbere): Amashuri atangira muri Gunyonyi (September), abanyeshuri bataha mu biruhuko muri Ukuboza (December), bakagaruka mu kigo mu Mbere (January).\n"
-    "  * TERM 2 (Igihe cy'Irobo ya Kabiri): Atangira mu Mbere (January), abanyeshuri bataha mu biruhuko muri Werurwe/Mweru (March/April), bakagaruka mu kigo mu Mata (April).\n"
-    "  * TERM 3 (Igihe cy'Irobo ya Gatuza): Atangira mu Mata (April), abanyeshuri bataha mu biruhuko bikuru muri Nyakanga (July), bakazagaruka mu kigo muri Gunyonyi (September).\n"
-    "  * GENERAL RULE ON RETURNING/DEPARTURE: Standard departure days for holidays are Fridays/Saturdays after exams, and students MUST return to school on Sundays before 5:00 PM before classes start on Monday.\n"
+    "- SCHOOL CALENDAR & DATES:\n"
+    "  * TERM 1: Amashuri atangira muri September, abanyeshuri bataha muri December, bakagaruka muri January.\n"
+    "  * TERM 2: Atangira muri January, abanyeshuri bataha muri March/April, bakagaruka muri April.\n"
+    "  * TERM 3: Atangira muri April, abanyeshuri bataha muri July, bakazagaruka muri September.\n"
+    "  * GENERAL RETURNING RULE: Abanyeshuri bagaruka ku Dimanche mbere ya 5:00 PM kabura gato amashuri agatangira ku Mbere.\n"
 
-    "- FACILITIES & INFRASTRUCTURE: 16 Classrooms, 1 large Hall for meetings, 4 specialized Computer Labs (SOD LAB, NIT LAB, ACC LAB, CSA LAB). Fast internet powered by EdNet. Compound is fully paved (ama pave hose) and fenced with a wall of baked bricks (urukuta rw'amatafari ahiye). Doors and windows are painted blue. Beautiful, clean gardens. 3 Sports fields (Football, Basketball, Volleyball).\n"
-    "- UNIFORM CODE: Boys wear black pants, blue shirts, and black short shoes with small heels. Girls wear black dresses, blue shirts, and black short shoes with small heels.\n"
-    "- ADMINISTRATION & STAFF: 33 Teachers. Head Master: MUVUNYI Noel. Administration includes DOS (Director of Studies), DOD (Director of Discipline), 1 Patron, 1 Animatron, IT Person (Elies), and an Accountant (Kontabule ushinzwe umutungo).\n"
-    "- RELIGIONS IN SCHOOL (5): Catholic, Jehovah's Witnesses (Yehova), Islam, La Jé Praix, and 7th Day Adventist (SDA).\n"
-    "- VISITING DAY: Visiting happens on the last weekend/Sunday of every month (buri cyumweru cya nyuma cy'ukwezi).\n"
-    "- WEEKDAY ROUTINE (Mon-Fri):\n"
-    "  * 4:30 AM: Wake up & shower.\n"
-    "  * 5:30 AM - 7:00 AM: Morning prep / revision (étude).\n"
-    "  * 7:00 AM: Breakfast.\n"
-    "  * 8:00 AM - 8:30 AM: Morning Assembly.\n"
-    "  * 8:30 AM - 10:20 AM: Classes (3 hours).\n"
-    "  * 10:20 AM - 10:30 AM: Morning break (10 mins).\n"
-    "  * 10:30 AM - 11:45 AM: Classes (2 hours).\n"
-    "  * 11:45 AM / 12:00 PM: Lunch in refectory.\n"
-    "  * 1:10 PM - 3:10 PM: Afternoon classes.\n"
-    "  * 3:10 PM - 5:10 PM: Evening break & 2 hours class/activities.\n"
-    "  * 5:10 PM: Dormitory rest & preparation.\n"
-    "  * 5:30 PM - 8:15 PM: Evening étude.\n"
-    "  * 8:15 PM - 8:30 PM: Night cleaning / duties.\n"
-    "  * 8:30 PM: Dinner / Prep.\n"
-    "  * 9:00 PM+: Lights out / sleep.\n"
-    "- WEEKEND ROUTINE:\n"
-    "  * Saturday: Morning prep -> Breakfast -> General school cleaning (travaux) -> Family meetings -> Lunch -> Afternoon movies/films until dinner.\n"
-    "  * Sunday: Morning prep -> Worship/Prayers until 12:00 PM -> Lunch -> Rest -> Evening prep.\n"
-    "- MEAL MENU (IMIRIRE):\n"
-    "  * Monday: Lunch = Kawunga | Dinner = Ibijumba\n"
-    "  * Tuesday: Lunch = Kawunga | Dinner = Ubugari\n"
-    "  * Wednesday: Lunch = Kawunga | Dinner = Rice\n"
-    "  * Thursday: Lunch = Rice | Dinner = Ubugari\n"
-    "  * Friday: Lunch = Rice\n"
-    "  * Saturday: Lunch = Rice vs Ibijumba\n"
-    "  * Sunday: Lunch = Kawunga vs Rice\n"
+    "- FACILITIES & INFRASTRUCTURE: 16 Classrooms, 1 large Hall, 4 Computer Labs (SOD LAB, NIT LAB, ACC LAB, CSA LAB). Fast EdNet internet. Compound fully paved & brick wall fence. Blue painted doors/windows. Clean gardens. 3 Sports fields (Football, Basketball, Volleyball).\n"
+    "- UNIFORM CODE: Boys wear black pants, blue shirts, black short shoes with small heels. Girls wear black dresses, blue shirts, black short shoes with small heels.\n"
+    "- ADMINISTRATION & STAFF: 33 Teachers. Head Master: MUVUNYI Noel. Administration includes DOS, DOD, 1 Patron, 1 Animatron, IT Person (Elies), and Accountant (Kontabule ushinzwe umutungo).\n"
+    "- RELIGIONS IN SCHOOL (5): Catholic, Jehovah's Witnesses, Islam, La Jé Praix, SDA.\n"
+    "- VISITING DAY: Last weekend/Sunday of every month.\n"
+    "- WEEKDAY ROUTINE: 4:30 AM Wake up -> 5:30-7:00 AM Étude -> 7:00 AM Breakfast -> 8:00 AM Assembly -> Classes (Break @ 10:20 AM) -> 11:45 AM Lunch -> 1:10 PM Afternoon Classes -> 5:30-8:15 PM Evening Étude -> 8:30 PM Dinner -> 9:00 PM Sleep.\n"
+    "- WEEKEND ROUTINE: Saturday: Étude -> Travaux/Cleaning -> Families -> Movies. Sunday: Étude -> Church -> Lunch -> Rest -> Evening Étude.\n"
+    "- MEAL MENU: Mon: Kawunga/Ibijumba | Tue: Kawunga/Ubugari | Wed: Kawunga/Rice | Thu: Rice/Ubugari | Fri: Rice | Sat: Rice vs Ibijumba | Sun: Kawunga vs Rice\n"
 )
 
 st.title("🏫 Bulinga TSS AI Assistant")
@@ -89,7 +103,7 @@ if "messages" not in st.session_state:
         {"role": "system", "content": SYSTEM_PROMPT}
     ]
 
-# Display chat history (excluding system prompt)
+# Display chat history
 for message in st.session_state.messages:
     if message["role"] != "system":
         with st.chat_message(message["role"]):
@@ -102,10 +116,22 @@ if prompt := st.chat_input("Baza ikibazo kuri Bulinga TSS..."):
         st.markdown(prompt)
 
     try:
-        with st.spinner("Bulinga TSS AI irimo gutekereza..."):
+        with st.spinner("Bulinga TSS AI irimo gushaka no gutekereza..."):
+            
+            # 1. Kora Search binyuze muri Tavily niba ikibazo kirimo amagambo ya NESA
+            live_data = get_live_nesa_search(prompt)
+            
+            # 2. Tegura amakuru ajya muri Groq AI
+            current_messages = list(st.session_state.messages)
+            if live_data:
+                current_messages[-1] = {
+                    "role": "user", 
+                    "content": f"{prompt}\n\n[Use this live information if applicable]:{live_data}"
+                }
+
             completion = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
-                messages=st.session_state.messages,
+                messages=current_messages,
                 temperature=0.3,
                 max_tokens=1024
             )
