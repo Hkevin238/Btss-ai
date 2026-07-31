@@ -9,11 +9,11 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. API KEY SETUP
+# 2. API KEY SETUP (Iba muri Streamlit Secrets, itabonetse ikafata iyawe nshya)
 try:
     groq_api_key = st.secrets["GROQ_API_KEY"]
 except Exception:
-    groq_api_key = "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"
+    groq_api_key = "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"
 
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
