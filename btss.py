@@ -10,24 +10,23 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. CUSTOM CSS (RAINBOW BACKGROUND) & JAVASCRIPT (POPUP ALERT)
+# 2. CUSTOM CSS (SOFT & SMOOTH BACKGROUND) & JAVASCRIPT (POPUP ALERT)
 st.markdown(
     """
     <style>
-    /* Animation y'amabara y'umukororobya (Rainbow Background) */
-    @keyframes rainbowGlow {
-        0%   { background-color: #ffadad; }
-        14%  { background-color: #ffd6a5; }
-        28%  { background-color: #fdffb6; }
-        42%  { background-color: #caffbf; }
-        57%  { background-color: #9bf6ff; }
-        71%  { background-color: #a0c4ff; }
-        85%  { background-color: #bdb2ff; }
-        100% { background-color: #ffadad; }
+    /* Animation y'amabara yoroshye cyane atapika mu maso (Soft Pastel Glow) */
+    @keyframes softRainbowGlow {
+        0%   { background-color: #fdf2f2; } /* Umutuku woroshye cyane */
+        20%  { background-color: #fdf8f2; } /* Umuhondo woroshye */
+        40%  { background-color: #f2fdf4; } /* Icyatsi cyoroshye */
+        60%  { background-color: #f2fbfd; } /* Ubururu bworoshye */
+        80%  { background-color: #f6f2fd; } /* Violet yoroshye */
+        100% { background-color: #fdf2f2; }
     }
 
     .stApp {
-        animation: rainbowGlow 15s infinite alternate ease-in-out;
+        /* Irahinduka mu buryo buhoro cyane mu masogonda 35 (35s) */
+        animation: softRainbowGlow 35s infinite ease-in-out;
     }
     </style>
 
