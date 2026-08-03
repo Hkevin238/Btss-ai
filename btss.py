@@ -110,6 +110,14 @@ SYSTEM_PROMPT = (
     
     "BULINGA TSS COMPREHENSIVE KNOWLEDGE BASE:\n"
     "- LOCATION & NEIGHBORHOOD: Located in Mushishiro Sector, Muhanga District. Nearby places include ACODES (a private school), a Centre de Santé (Health Center), and a Catholic Church. Climate is usually cool/cold with occasional rain.\n"
+    "- CONTACT INFORMATION: School Email: bulingatvetschool@gmail.com | Headmaster Email: munoel20@gmail.com | Phone: +250788546462\n"
+    "- FEES & PAYMENTS:\n"
+    "  * Total School Fees per term: 95,500 FRW (Minerval: 92,000 FRW + Ubwishingizi bw'impanuka: 1,500 FRW + Ikarita y'ishuri n'imyitwarire: 2,000 FRW).\n"
+    "  * Bank Account: Umwalimu SACCO Account No: 900009815200\n"
+    "  * Mobile Money Payment Code: *182*3*10*1*Code_y_umunyeshuri_yo_muri_SDMS#\n"
+    "- SCHOOL RULES & PROHIBITED ITEMS:\n"
+    "  * STRICTLY PROHIBITED: Laptop / Machine / Mudasobwa NIZEMEWE na kidogo k'abanyeshuri!\n"
+    "  * WARNING/IKITONDERWA: Umunyeshuri uzazana ikintu icyo ari cyo cyose kitemewe mu ishuri aracyamburwa kandi NTABWO agisubizwa burundu!\n"
     "- HOW TO GET THERE: From Muhanga Taxi Park, take a bus heading to Bulinga, drop off at the tarmac road (kaburimbo), take the dirt road passing through Kabadaha center, go through 4 corners/bends (amakorosi 4) to reach the school.\n"
     "- ACADEMIC LEVEL & COURSES: The school offers A'Level ONLY (No O'Level). Offers Level 3 to Level 5 TVET Trades:\n"
     "  * Software Development: L3 SOD, L4 SOD, L5 SOD\n"
@@ -125,7 +133,7 @@ SYSTEM_PROMPT = (
 
     "- FACILITIES & INFRASTRUCTURE: 16 Classrooms, 1 large Hall, 4 Computer Labs (SOD LAB, NIT LAB, ACC LAB, CSA LAB). Fast EdNet internet. Compound fully paved & brick wall fence. Blue painted doors/windows. Clean gardens. 3 Sports fields (Football, Basketball, Volleyball).\n"
     "- UNIFORM CODE: Boys wear black pants, blue shirts, black short shoes with small heels. Girls wear black dresses, blue shirts, black short shoes with small heels.\n"
-    "- ADMINISTRATION & STAFF: 33 Teachers. Head Master: MUVUNYI Noel. Administration includes DOS, DOD, 1 Patron, 1 Animatron, IT Person (Elies), and Accountant (Kontabule ushinzwe umutungo).\n"
+    "- ADMINISTRATION & STAFF: 33 Teachers. Head Master: MUVUNYI Noel (Email: munoel20@gmail.com). Administration includes DOS, DOD, 1 Patron, 1 Animatron, IT Person (Elies), and Accountant (Kontabule ushinzwe umutungo).\n"
     "- RELIGIONS IN SCHOOL (5): Catholic, Jehovah's Witnesses, Islam, La Jé Praix, SDA.\n"
     "- VISITING DAY: Last weekend/Sunday of every month.\n"
     "- WEEKDAY ROUTINE: 4:30 AM Wake up -> 5:30-7:00 AM Étude -> 7:00 AM Breakfast -> 8:00 AM Assembly -> Classes (Break @ 10:20 AM) -> 11:45 AM Lunch -> 1:10 PM Afternoon Classes -> 5:30-8:15 PM Evening Étude -> 8:30 PM Dinner -> 9:00 PM Sleep.\n"
