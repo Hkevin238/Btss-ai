@@ -18,12 +18,12 @@ def get_base64_image(image_path):
             return base64.b64encode(img_file.read()).decode()
     return ""
 
-# Ifata kode ya base64 y'ifoto ya btss.png
 img_base64 = get_base64_image("btss.png")
 
-# 3. CUSTOM CSS (BTSS.PNG BASE64 WATERMARK BACKGROUND) & JAVASCRIPT
+# 3. CUSTOM CSS (BACKGROUND WATERMARK & UI Y'UBUTUMWA: USER -> RIGHT, AI -> LEFT)
 bg_css = f"""
 <style>
+/* Watermark Background */
 .stApp::before {{
     content: "";
     position: fixed;
@@ -32,35 +32,75 @@ bg_css = f"""
     width: 100vw;
     height: 100vh;
     background-image: url('data:image/png;base64,{img_base64}');
-    background-size: 380px; /* Ubunini bwa logo */
+    background-size: 380px;
     background-position: center;
     background-repeat: no-repeat;
-    opacity: 0.12; /* Umweru/igicucu cyoroshye gusa ngo itagupikira mu maso */
+    opacity: 0.12;
     z-index: -1;
     pointer-events: none;
+}}
+
+/* Container yo gutunganya ubutumwa bwose */
+[data-testid="stChatMessageContent"] {{
+    border-radius: 18px !important;
+    padding: 12px 16px !important;
+    font-size: 15px !important;
+    line-height: 1.4 !important;
+}}
+
+/* Ubutumwa bwa User (Kujyana Iburyo - Right side) */
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {{
+    flex-direction: row-reverse !important;
+    text-align: right !important;
+}}
+
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageContent"] {{
+    background-color: #2f2f2f !important;
+    color: #ffffff !important;
+    margin-left: auto !important;
+    margin-right: 0px !important;
+    border-radius: 18px 18px 4px 18px !important;
+    max-width: 80% !important;
+}}
+
+/* Ubutumwa bwa AI / Assistant (Kuba Ibumoso - Left side) */
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {{
+    flex-direction: row !important;
+    text-align: left !important;
+}}
+
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) [data-testid="stChatMessageContent"] {{
+    background-color: transparent !important;
+    color: #ffffff !important;
+    margin-right: auto !important;
+    margin-left: 0px !important;
+    border-radius: 18px 18px 18px 4px !important;
+    max-width: 85% !important;
+}}
+
+/* Guhisha avatar y'umukoresha (User Avatar) */
+[data-testid="stChatMessageAvatarUser"] {{
+    display: none !important;
 }}
 </style>
 
 <script>
-// Popup Alert buri masogonda 5 (5000 milliseconds)
+// Popup Alert buri masogonda 5
 setInterval(function() {{
-    alert("Enjoy for using BULINGA TSS AI !!");
+    alert("Enjoy using BULINGA TSS AI !!");
 }}, 5000);
 </script>
 """
 
 st.markdown(bg_css, unsafe_allow_html=True)
 
-# 4. API KEYS SETUP
-try:
-    groq_api_key = st.secrets["GROQ_API_KEY"]
-except Exception:
-    groq_api_key = "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"
+# 4. API KEYS SETUP (Guhingura muri Secrets neza)
+groq_api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+tavily_api_key = st.secrets.get("TAVILY_API_KEY") or os.getenv("TAVILY_API_KEY")
 
-try:
-    tavily_api_key = st.secrets["TAVILY_API_KEY"]
-except Exception:
-    tavily_api_key = "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" 
+if not groq_api_key:
+    st.error("⚠️ GROQ_API_KEY ntiyabonywe muri Streamlit Secrets!")
+    st.stop()
 
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
@@ -142,7 +182,7 @@ SYSTEM_PROMPT = (
 )
 
 st.title("🏫 Bulinga TSS AI Assistant")
-st.write("Official Assistant for Bulinga TSS located in Muhanga , Mushishiro.")
+st.write("Official Assistant for Bulinga TSS located in Muhanga, Mushishiro.")
 
 # 5. SESSION STATE FOR CHAT
 if "messages" not in st.session_state:
@@ -157,41 +197,42 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"], avatar=avatar_img):
             st.markdown(message["content"])
 
-# 6. CHAT INPUT
+# 6. CHAT INPUT & RESPONSE
 if prompt := st.chat_input("Ask related Bulinga TSS..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     try:
-        with st.spinner("Bulinga TSS AI thinking...."):
-            
-            # Kora Search binyuze muri Tavily niba ikibazo kirimo amagambo ya NESA
-            live_data = get_live_nesa_search(prompt)
-            
-            current_messages = list(st.session_state.messages)
-            if live_data:
-                current_messages[-1] = {
-                    "role": "user", 
-                    "content": f"{prompt}\n\n[Use this live information if applicable]:{live_data}"
-                }
-
-            completion = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=current_messages,
-                temperature=0.3,
-                max_tokens=1024
-            )
-            
-            answer = completion.choices[0].message.content
-            if "</think>" in answer:
-                answer = answer.split("</think>")[-1]
-            answer = answer.replace("<think>", "").strip()
-
-        st.session_state.messages.append({"role": "assistant", "content": answer})
-        
         with st.chat_message("assistant", avatar="btss.png"):
-            st.markdown(answer)
+            message_placeholder = st.empty()
             
+            with st.status("Bulinga TSS AI thinking....", expanded=False) as status:
+                live_data = get_live_nesa_search(prompt)
+                
+                current_messages = list(st.session_state.messages)
+                if live_data:
+                    current_messages[-1] = {
+                        "role": "user", 
+                        "content": f"{prompt}\n\n[Use this live information if applicable]:{live_data}"
+                    }
+
+                completion = client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=current_messages,
+                    temperature=0.3,
+                    max_tokens=1024
+                )
+                
+                answer = completion.choices[0].message.content
+                if "</think>" in answer:
+                    answer = answer.split("</think>")[-1]
+                answer = answer.replace("<think>", "").strip()
+                
+                status.update(label="Done!", state="complete", expanded=False)
+
+            message_placeholder.markdown(answer)
+            st.session_state.messages.append({"role": "assistant", "content": answer})
+
     except Exception as e:
         st.error(f"Harimo ikosa: {e}")
