@@ -4,14 +4,15 @@ import streamlit as st
 from openai import OpenAI
 from tavily import TavilyClient
 
-# 1. PAGE CONFIG
+# 1. PAGE CONFIG (Layout Centered force ku miterere ya Mobile UI)
 st.set_page_config(
-    page_title="Bulinga TSS AI",
+    page_title="ChatGPT - Bulinga TSS",
     page_icon="btss.png",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-# 2. FUNCTION BWO GUHINDURA IFOTO MO BASE64 KU ZERA MURI BACKGROUND
+# 2. FUNCTION BWO GUHINDURA IFOTO MO BASE64
 def get_base64_image(image_path):
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
@@ -20,38 +21,60 @@ def get_base64_image(image_path):
 
 img_base64 = get_base64_image("btss.png")
 
-# 3. CUSTOM CSS (BACKGROUND WATERMARK & UI Y'UBUTUMWA: USER -> RIGHT, AI -> LEFT)
+# 3. CUSTOM CSS (PURE BLACK DARK MODE & CHATGPT MOBILE STYLE BUBBLES)
 bg_css = f"""
 <style>
-/* Watermark Background */
-.stApp::before {{
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-image: url('data:image/png;base64,{img_base64}');
-    background-size: 380px;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.12;
-    z-index: -1;
-    pointer-events: none;
+/* Pure Black OLED Background */
+.stApp {{
+    background-color: #000000 !important;
+    color: #ffffff !important;
 }}
 
-/* Container yo gutunganya ubutumwa bwose */
+/* Hide default Streamlit elements */
+header, footer, [data-testid="stHeader"] {{ 
+    display: none !important; 
+}}
+
+.block-container {{
+    padding-top: 1rem !important;
+    padding-bottom: 5rem !important;
+    max-width: 600px !important;
+}}
+
+/* Top App Bar Header UI (ChatGPT style) */
+.top-bar {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0px 20px 0px;
+    border-bottom: 1px solid #1a1a1a;
+    margin-bottom: 20px;
+}}
+
+.top-bar-title {{
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ffffff;
+}}
+
+.top-bar-icons {{
+    display: flex;
+    gap: 18px;
+    font-size: 1.2rem;
+    color: #cccccc;
+}}
+
+/* Custom Chat Container Styling */
 [data-testid="stChatMessageContent"] {{
-    border-radius: 18px !important;
-    padding: 12px 16px !important;
-    font-size: 15px !important;
-    line-height: 1.4 !important;
+    background-color: transparent !important;
+    padding: 0px !important;
 }}
 
-/* Ubutumwa bwa User (Kujyana Iburyo - Right side) */
+/* User Message Container (Pill Right Aligned) */
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {{
     flex-direction: row-reverse !important;
     text-align: right !important;
+    margin-bottom: 18px !important;
 }}
 
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageContent"] {{
@@ -59,14 +82,18 @@ bg_css = f"""
     color: #ffffff !important;
     margin-left: auto !important;
     margin-right: 0px !important;
-    border-radius: 18px 18px 4px 18px !important;
+    padding: 12px 18px !important;
+    border-radius: 22px !important;
     max-width: 80% !important;
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
 }}
 
-/* Ubutumwa bwa AI / Assistant (Kuba Ibumoso - Left side) */
+/* Assistant Message Container (Left Aligned Plain Text) */
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {{
     flex-direction: row !important;
     text-align: left !important;
+    margin-bottom: 22px !important;
 }}
 
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) [data-testid="stChatMessageContent"] {{
@@ -74,27 +101,55 @@ bg_css = f"""
     color: #ffffff !important;
     margin-right: auto !important;
     margin-left: 0px !important;
-    border-radius: 18px 18px 18px 4px !important;
-    max-width: 85% !important;
+    max-width: 100% !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
 }}
 
-/* Guhisha avatar y'umukoresha (User Avatar) */
-[data-testid="stChatMessageAvatarUser"] {{
+/* Action Icons below AI Responses */
+.action-bar {{
+    display: flex;
+    gap: 16px;
+    color: #8e8e93;
+    font-size: 1.05rem;
+    margin-top: 8px;
+    cursor: pointer;
+}}
+
+/* Hide Default Avatars */
+[data-testid="stChatMessageAvatarUser"], [data-testid="stChatMessageAvatarAssistant"] {{
     display: none !important;
 }}
-</style>
 
-<script>
-// Popup Alert buri masogonda 5
-setInterval(function() {{
-    alert("Enjoy using BULINGA TSS AI !!");
-}}, 5000);
-</script>
+/* Custom Chat Input Box */
+.stChatInputContainer {{
+    background-color: #000000 !important;
+}}
+
+.stChatInput > div {{
+    background-color: #2f2f2f !important;
+    border-radius: 25px !important;
+    border: none !important;
+    color: #ffffff !important;
+}}
+</style>
 """
 
 st.markdown(bg_css, unsafe_allow_html=True)
 
-# 4. API KEYS SETUP (Guhingura muri Secrets neza)
+# Top Bar Header Interface
+st.markdown("""
+<div class="top-bar">
+    <div style="font-size: 1.4rem; cursor: pointer;">☰</div>
+    <div class="top-bar-title">ChatGPT</div>
+    <div class="top-bar-icons">
+        <span style="cursor: pointer;">📝</span>
+        <span style="cursor: pointer;">⋮</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# 4. API KEYS SETUP
 groq_api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 tavily_api_key = st.secrets.get("TAVILY_API_KEY") or os.getenv("TAVILY_API_KEY")
 
@@ -107,7 +162,6 @@ client = OpenAI(
     api_key=groq_api_key
 )
 
-# Tangiza Tavily Client
 tavily_client = None
 if tavily_api_key:
     try:
@@ -181,33 +235,40 @@ SYSTEM_PROMPT = (
     "- MEAL MENU: Mon: Kawunga/Ibijumba | Tue: Kawunga/Ubugari | Wed: Kawunga/Rice | Thu: Rice/Ubugari | Fri: Rice | Sat: Rice vs Ibijumba | Sun: Kawunga vs Rice\n"
 )
 
-st.title("🏫 Bulinga TSS AI Assistant")
-st.write("Official Assistant for Bulinga TSS located in Muhanga, Mushishiro.")
-
 # 5. SESSION STATE FOR CHAT
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": SYSTEM_PROMPT}
     ]
 
-# Display chat history
+# Display Chat History Exact like ChatGPT Mobile App
 for message in st.session_state.messages:
     if message["role"] != "system":
-        avatar_img = "btss.png" if message["role"] == "assistant" else None
-        with st.chat_message(message["role"], avatar=avatar_img):
+        with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            if message["role"] == "assistant":
+                st.markdown("""
+                <div class="action-bar">
+                    <span>📋</span>
+                    <span>👍</span>
+                    <span>👎</span>
+                    <span>🔊</span>
+                    <span>🔄</span>
+                    <span>🔗</span>
+                </div>
+                """, unsafe_allow_html=True)
 
 # 6. CHAT INPUT & RESPONSE
-if prompt := st.chat_input("Ask related Bulinga TSS..."):
+if prompt := st.chat_input("Message ChatGPT..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     try:
-        with st.chat_message("assistant", avatar="btss.png"):
+        with st.chat_message("assistant"):
             message_placeholder = st.empty()
             
-            with st.status("Bulinga TSS AI thinking....", expanded=False) as status:
+            with st.spinner(""):
                 live_data = get_live_nesa_search(prompt)
                 
                 current_messages = list(st.session_state.messages)
@@ -228,10 +289,18 @@ if prompt := st.chat_input("Ask related Bulinga TSS..."):
                 if "</think>" in answer:
                     answer = answer.split("</think>")[-1]
                 answer = answer.replace("<think>", "").strip()
-                
-                status.update(label="Done!", state="complete", expanded=False)
 
             message_placeholder.markdown(answer)
+            st.markdown("""
+            <div class="action-bar">
+                <span>📋</span>
+                <span>👍</span>
+                <span>👎</span>
+                <span>🔊</span>
+                <span>🔄</span>
+                <span>🔗</span>
+            </div>
+            """, unsafe_allow_html=True)
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
     except Exception as e:
