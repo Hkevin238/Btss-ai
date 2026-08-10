@@ -6,7 +6,7 @@ from tavily import TavilyClient
 
 # 1. PAGE CONFIG (Layout Centered force ku miterere ya Mobile UI)
 st.set_page_config(
-    page_title="ChatGPT - Bulinga TSS",
+    page_title="Bulinga TSS AI",
     page_icon="btss.png",
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -141,7 +141,7 @@ st.markdown(bg_css, unsafe_allow_html=True)
 st.markdown("""
 <div class="top-bar">
     <div style="font-size: 1.4rem; cursor: pointer;">☰</div>
-    <div class="top-bar-title">ChatGPT</div>
+    <div class="top-bar-title">BULINGA TSS AI </div>
     <div class="top-bar-icons">
         <span style="cursor: pointer;">📝</span>
         <span style="cursor: pointer;">⋮</span>
@@ -193,7 +193,7 @@ def get_live_nesa_search(query: str) -> str:
 
 SYSTEM_PROMPT = (
     "You are the official AI assistant for Bulinga TSS (Bulinga TVET School), located in Muhanga District, Mushishiro Sector.\n"
-    "You were created by Developer Kevin on July 25, 2026, in the afternoon.\n\n"
+    "You were created by Developer Kevin on July 25, 2026, at the afternoon.\n\n"
     
     "STRICT RULES:\n"
     "1. Answer ONLY questions related to Bulinga TSS using the detailed facts provided below.\n"
@@ -259,7 +259,7 @@ for message in st.session_state.messages:
                 """, unsafe_allow_html=True)
 
 # 6. CHAT INPUT & RESPONSE
-if prompt := st.chat_input("Message ChatGPT..."):
+if prompt := st.chat_input("Ask related BULINGA TSS...."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
