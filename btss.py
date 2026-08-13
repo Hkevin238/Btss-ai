@@ -5,14 +5,28 @@ from openai import OpenAI
 from tavily import TavilyClient
 
 # 1. PAGE CONFIG (Layout Centered force ku miterere ya Mobile UI)
+# Twongereyeho page_title yihariye izatuma itagaragaramo "- Streamlit"
 st.set_page_config(
-    page_title="Bulinga TSS AI",
+    page_title="BULINGA TSS AI",
     page_icon="btss.png",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# 2. FUNCTION BWO GUHINDURA IFOTO MO BASE64
+# 2. HASHOWE KANGAHE KUGIRA NGO TITLE YA BROWSER YEMEZE NEZA IZINA RYAWE GUSA
+st.markdown("""
+    <script>
+        document.title = "BULINGA TSS AI";
+        const observer = new MutationObserver(function(mutations) {
+            if (document.title.includes("Streamlit")) {
+                document.title = "BULINGA TSS AI";
+            }
+        });
+        observer.observe(document.querySelector('head'), { subtree: true, childList: true });
+    </script>
+""", unsafe_allow_html=True)
+
+# 3. FUNCTION BWO GUHINDURA IFOTO MO BASE64
 def get_base64_image(image_path):
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
@@ -21,7 +35,7 @@ def get_base64_image(image_path):
 
 img_base64 = get_base64_image("btss.png")
 
-# 3. CUSTOM CSS (PURE BLACK DARK MODE & CHATGPT MOBILE STYLE BUBBLES)
+# 4. CUSTOM CSS (PURE BLACK DARK MODE & CHATGPT MOBILE STYLE BUBBLES)
 bg_css = f"""
 <style>
 /* Pure Black OLED Background */
@@ -149,7 +163,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 4. API KEYS SETUP
+# 5. API KEYS SETUP
 groq_api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 tavily_api_key = st.secrets.get("TAVILY_API_KEY") or os.getenv("TAVILY_API_KEY")
 
@@ -235,7 +249,7 @@ SYSTEM_PROMPT = (
     "- MEAL MENU: Mon: Kawunga/Ibijumba | Tue: Kawunga/Ubugari | Wed: Kawunga/Rice | Thu: Rice/Ubugari | Fri: Rice | Sat: Rice vs Ibijumba | Sun: Kawunga vs Rice\n"
 )
 
-# 5. SESSION STATE FOR CHAT
+# 6. SESSION STATE FOR CHAT
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": SYSTEM_PROMPT}
@@ -258,7 +272,7 @@ for message in st.session_state.messages:
                 </div>
                 """, unsafe_allow_html=True)
 
-# 6. CHAT INPUT & RESPONSE
+# 7. CHAT INPUT & RESPONSE
 if prompt := st.chat_input("Ask related BULINGA TSS...."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
