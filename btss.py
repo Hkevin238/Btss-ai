@@ -1,4 +1,3 @@
-import base64
 import os
 import streamlit as st
 from openai import OpenAI
@@ -26,35 +25,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 3. FUNCTION BWO GUHINDURA IFOTO MO BASE64 (Yavuguruwe kugira ngo itazana error)
-def get_base64_image(image_path):
-    try:
-        if os.path.exists(image_path):
-            with open(image_path, "rb") as img_file:
-                return base64.b64encode(img_file.read()).decode()
-    except Exception:
-        return ""
-    return ""
-
-img_base64 = get_base64_image("btss.png")
-
-# 4. CUSTOM CSS
-bg_css = f"""
+# 3. CUSTOM CSS
+bg_css = """
 <style>
-.stApp {{ background-color: #000000 !important; color: #ffffff !important; }}
-header, footer, [data-testid="stHeader"] {{ display: none !important; }}
-.block-container {{ padding-top: 1rem !important; padding-bottom: 5rem !important; max-width: 600px !important; }}
-.top-bar {{ display: flex; justify-content: space-between; align-items: center; padding: 10px 0px 20px 0px; border-bottom: 1px solid #1a1a1a; margin-bottom: 20px; }}
-.top-bar-title {{ font-size: 1.3rem; font-weight: 600; color: #ffffff; }}
-.top-bar-icons {{ display: flex; gap: 18px; font-size: 1.2rem; color: #cccccc; }}
-[data-testid="stChatMessageContent"] {{ background-color: transparent !important; padding: 0px !important; }}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {{ flex-direction: row-reverse !important; text-align: right !important; margin-bottom: 18px !important; }}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageContent"] {{ background-color: #2f2f2f !important; color: #ffffff !important; margin-left: auto !important; margin-right: 0px !important; padding: 12px 18px !important; border-radius: 22px !important; max-width: 80% !important; font-size: 1rem !important; line-height: 1.4 !important; }}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {{ flex-direction: row !important; text-align: left !important; margin-bottom: 22px !important; }}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) [data-testid="stChatMessageContent"] {{ background-color: transparent !important; color: #ffffff !important; margin-right: auto !important; margin-left: 0px !important; max-width: 100% !important; font-size: 1rem !important; line-height: 1.5 !important; }}
-[data-testid="stChatMessageAvatarUser"], [data-testid="stChatMessageAvatarAssistant"] {{ display: none !important; }}
-.stChatInputContainer {{ background-color: #000000 !important; }}
-.stChatInput > div {{ background-color: #2f2f2f !important; border-radius: 25px !important; border: none !important; color: #ffffff !important; }}
+.stApp { background-color: #000000 !important; color: #ffffff !important; }
+header, footer, [data-testid="stHeader"] { display: none !important; }
+.block-container { padding-top: 1rem !important; padding-bottom: 5rem !important; max-width: 600px !important; }
+.top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0px 20px 0px; border-bottom: 1px solid #1a1a1a; margin-bottom: 20px; }
+.top-bar-title { font-size: 1.3rem; font-weight: 600; color: #ffffff; }
+.top-bar-icons { display: flex; gap: 18px; font-size: 1.2rem; color: #cccccc; }
+[data-testid="stChatMessageContent"] { background-color: transparent !important; padding: 0px !important; }
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) { flex-direction: row-reverse !important; text-align: right !important; margin-bottom: 18px !important; }
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageContent"] { background-color: #2f2f2f !important; color: #ffffff !important; margin-left: auto !important; margin-right: 0px !important; padding: 12px 18px !important; border-radius: 22px !important; max-width: 80% !important; font-size: 1rem !important; line-height: 1.4 !important; }
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) { flex-direction: row !important; text-align: left !important; margin-bottom: 22px !important; }
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) [data-testid="stChatMessageContent"] { background-color: transparent !important; color: #ffffff !important; margin-right: auto !important; margin-left: 0px !important; max-width: 100% !important; font-size: 1rem !important; line-height: 1.5 !important; }
+[data-testid="stChatMessageAvatarUser"], [data-testid="stChatMessageAvatarAssistant"] { display: none !important; }
+.stChatInputContainer { background-color: #000000 !important; }
+.stChatInput > div { background-color: #2f2f2f !important; border-radius: 25px !important; border: none !important; color: #ffffff !important; }
 </style>
 """
 st.markdown(bg_css, unsafe_allow_html=True)
@@ -74,7 +61,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 5. API KEYS SETUP
+# 4. API KEYS SETUP
 groq_api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 
 if not groq_api_key:
@@ -107,7 +94,7 @@ if prompt := st.chat_input("Ask related BULINGA TSS...."):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         
-        # Guhamagara Groq API ukoresha model nshya ya openai/gpt-oss-20b
+        # Guhamagara Groq API ukoresha model ya openai/gpt-oss-20b
         completion = client.chat.completions.create(
             model="openai/gpt-oss-20b", 
             messages=st.session_state.messages, 
