@@ -94,18 +94,21 @@ if prompt := st.chat_input("Ask related BULINGA TSS...."):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         
-        # Guhamagara Groq API ukoresha model ya openai/gpt-oss-20b
-        completion = client.chat.completions.create(
-            model="openai/gpt-oss-20b", 
-            messages=st.session_state.messages, 
-            temperature=0.3
-        )
+        try:
+            # Guhamagara Groq API ukoresha model ya openai/gpt-oss-20b
+            completion = client.chat.completions.create(
+                model="openai/gpt-oss-20b", 
+                messages=st.session_state.messages, 
+                temperature=0.3
+            )
 
-        answer = (
-            completion.choices[0]
-            .message.content.replace("<think>", "")
-            .split("</think>")[-1]
-            .strip()
-        )
-        message_placeholder.markdown(answer)
-        st.session_state.messages.append({"role": "assistant", "content": answer})
+            answer = (
+                completion.choices[0]
+                .message.content.replace("<think>", "")
+                .split("</think>")[-1]
+                .strip()
+            )
+            message_placeholder.markdown(answer)
+            st.session_state.messages.append({"role": "assistant", "content": answer})
+        except Exception as e:
+            st.error(f"Habaye ikibazo mu guhamagara AI: {e}")
