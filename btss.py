@@ -1,24 +1,21 @@
 import os
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from groq import Groq
 import urllib.parse
-import json
 
 app = FastAPI(title="BULINGA TSS AI")
+
+# Guha uburenganzira bwo gusoma amafoto n'izindi dosiye (bg.jpg, btss.png, bulinga.png) biri muri folder imwe
+app.mount("/static", StaticFiles(directory="."), name="static")
 
 # =========================================================
 # GROQ CLIENT & CONFIGURATION
 # =========================================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY or "YOUR_GROQ_API_KEY")
-
-# In-memory storage for sessions & users (for single instance deployment)
-users_db = {"admin": "1234"}
-chat_histories = {}
 
 # =========================================================
 # UI TRANSLATIONS DICTIONARY
@@ -119,7 +116,7 @@ You are BULINGA AI, an official AI assistant built exclusively
 for BULINGA TECHNICAL SECONDARY SCHOOL (BULINGA TS SCHOOL).
 
 CRITICAL RULE REGARDING CREATOR:
-- You were developed, created, and built exclusively by Developer/Programmer Kevin and his email:therealhacks538@gmail.com,Website: wwww.kevinhakiza.com.
+- You were developed, created, and built exclusively by Developer/Programmer Kevin.
 - You must provide/give/notify someone who needs to contact Dev Kevin to visit his Portfolio Webpage: (https://lovable.dev/projects/2d0e0900-16e8-4e8c-90fe-b2df1c0999c2)
 - NEVER mention OpenAI, ChatGPT, or any other outside entities as your creator. If anyone asks who made you, built you, or programmed you, proudly state that you were developed and built by Developer Kevin 👨‍💻🚀 and his email: therealhacks583@gmail.com , Website: www.kevinhakiza.com (not BULINGA TSS programmers).
 
@@ -181,12 +178,27 @@ async def chat_ui():
             100% { transform: translateY(0px); }
         }
         .moving-title { animation: bounceSlow 3s ease-in-out infinite; display: inline-block; }
+        
+        /* Custom Background Image bg.jpg styling with smooth overlay */
+        .app-bg {
+            background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('/static/bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        
+        /* Clean formatted AI response text styling */
+        .ai-response-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.6;
+        }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-darkBg text-gray-900 dark:text-gray-100 h-screen flex overflow-hidden">
+<body class="bg-gray-50 dark:bg-darkBg text-gray-900 dark:text-gray-100 h-screen flex overflow-hidden app-bg">
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-72 bg-white dark:bg-sidebarBg border-r border-gray-200 dark:border-gray-800 flex flex-col justify-between transition-all duration-300 z-20">
+    <aside id="sidebar" class="w-72 bg-white/95 dark:bg-sidebarBg/95 backdrop-blur border-r border-gray-200 dark:border-gray-800 flex flex-col justify-between transition-all duration-300 z-20">
         <div class="p-4 flex flex-col gap-4 overflow-y-auto">
             <div class="flex items-center justify-between">
                 <h1 class="text-lg font-bold moving-title">BULINGA TSS AI 🏫</h1>
@@ -199,7 +211,7 @@ async def chat_ui():
             <div class="flex flex-col gap-3 text-sm">
                 <div>
                     <label class="text-xs text-gray-400 font-semibold">🌐 System Language</label>
-                    <select id="sysLang" onchange="updateLanguage()" class="w-full mt-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                    <select id="sysLang" class="w-full mt-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
                         <option value="Kinyarwanda">Kinyarwanda</option>
                         <option value="English">English</option>
                         <option value="Français">Français</option>
@@ -214,14 +226,6 @@ async def chat_ui():
                         <option value="English">English</option>
                         <option value="Français">Français</option>
                         <option value="Kiswahili">Kiswahili</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="text-xs text-gray-400 font-semibold">🎨 Theme Mode</label>
-                    <select id="themeSelect" onchange="switchTheme()" class="w-full mt-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
-                        <option value="dark">Dark Mode 🌙</option>
-                        <option value="light">Light Mode ☀️</option>
                     </select>
                 </div>
             </div>
@@ -240,11 +244,11 @@ async def chat_ui():
     </aside>
 
     <!-- MAIN CHAT AREA -->
-    <main class="flex-1 flex flex-col h-full relative bg-white dark:bg-[#1e1e1f]">
+    <main class="flex-1 flex flex-col h-full relative bg-transparent">
         <!-- Top Navbar -->
-        <header class="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center px-4 justify-between bg-white/80 dark:bg-[#18191a]/80 backdrop-blur">
+        <header class="h-14 border-b border-gray-200/20 dark:border-gray-800/50 flex items-center px-4 justify-between bg-white/40 dark:bg-[#18191a]/60 backdrop-blur-md">
             <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800">☰</button>
+                <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-800/50">☰</button>
                 <span class="font-bold text-base">BULINGA AI Assistant 🚀</span>
             </div>
             <div id="rotatingNotice" class="text-xs text-blue-400 font-medium hidden sm:block">Urakaza neza kuri BTSS AI Assistant! 🙏✨</div>
@@ -253,23 +257,23 @@ async def chat_ui():
         <!-- Chat Messages Feed -->
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-6">
             <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
-                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">AI</div>
-                <div class="flex-1 bg-gray-100 dark:bg-[#3a3b3c] p-4 rounded-2xl leading-relaxed text-sm shadow-sm">
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">AI</div>
+                <div class="flex-1 bg-white/9idity dark:bg-[#3a3b3c]/90 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md ai-response-content">
                     Murakaza neza kuri Bulinga TSS AI! Baza icyo ushaka cyose cyangwa se ubaze amakuru y'ishuri ryacu. 🏫✨
                 </div>
             </div>
         </div>
 
         <!-- Chat Input Form -->
-        <div class="p-4 bg-transparent max-w-4xl mx-w-4xl w-full mx-auto">
-            <form id="chatForm" onsubmit="sendMessage(event)" class="relative flex items-center bg-white dark:bg-[#242526] border border-gray-300 dark:border-[#3a3b3c] rounded-2xl shadow-lg px-4 py-2">
+        <div class="p-4 bg-transparent max-w-4xl w-full mx-auto">
+            <form id="chatForm" onsubmit="sendMessage(event)" class="relative flex items-center bg-white/95 dark:bg-[#242526]/95 backdrop-blur border border-gray-300 dark:border-[#3a3b3c] rounded-2xl shadow-xl px-4 py-2">
                 <input type="text" id="userInput" placeholder="Baza icyo ushaka cyose cyangwa wandike 'Amakuru ya Bulinga'..." autocomplete="off"
                     class="w-full bg-transparent focus:outline-none text-sm py-2 pr-12 text-gray-900 dark:text-gray-100">
-                <button type="submit" class="absolute right-3 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition">
+                <button type="submit" class="absolute right-3 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition shadow">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
             </form>
-            <div class="text-center text-[11px] text-gray-400 mt-2">Developed with ❤️ by Developer Kevin • Bulinga TSS AI</div>
+            <div class="text-center text-[11px] text-gray-300 mt-2">Developed with ❤️ by Developer Kevin • Bulinga TSS AI</div>
         </div>
     </main>
 
@@ -277,15 +281,6 @@ async def chat_ui():
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('hidden');
-        }
-
-        function switchTheme() {
-            const theme = document.getElementById('themeSelect').value;
-            if(theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
         }
 
         function clearHistory() {
@@ -305,11 +300,11 @@ async def chat_ui():
 
             const chatContainer = document.getElementById('chatContainer');
             
-            // Append User Message
+            // Append User Message cleanly
             chatContainer.innerHTML += `
                 <div class="flex items-start gap-4 max-w-3xl mx-auto w-full justify-end">
-                    <div class="bg-blue-600 text-white p-4 rounded-2xl leading-relaxed text-sm shadow-sm max-w-[75%]">${query}</div>
-                    <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-sm">U</div>
+                    <div class="bg-blue-600 text-white p-4 rounded-2xl leading-relaxed text-sm shadow-md max-w-[75%] ai-response-content">${query}</div>
+                    <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-sm shadow-md">U</div>
                 </div>`;
             inputField.value = '';
             chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -318,8 +313,8 @@ async def chat_ui():
             const thinkingId = 'thinking-' + Date.now();
             chatContainer.innerHTML += `
                 <div id="${thinkingId}" class="flex items-start gap-4 max-w-3xl mx-auto w-full">
-                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">AI</div>
-                    <div class="bg-gray-100 dark:bg-[#3a3b3c] p-4 rounded-2xl italic text-gray-400 text-sm">⚪ BULINGA AI irimo gutekereza... 💭</div>
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">AI</div>
+                    <div class="bg-white/90 dark:bg-[#3a3b3c]/90 backdrop-blur p-4 rounded-2xl italic text-gray-400 text-sm shadow-md">⚪ BULINGA AI irimo gutekereza... 💭</div>
                 </div>`;
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -335,13 +330,22 @@ async def chat_ui():
                 
                 document.getElementById(thinkingId).remove();
 
-                // Append Assistant Message
+                // Build local images html if requested
+                let imagesHtml = '';
+                if (data.local_images && data.local_images.length > 0) {
+                    data.local_images.forEach(imgUrl => {
+                        imagesHtml += `<img src="${imgUrl}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Bulinga TSS Photo">`;
+                    });
+                }
+
+                // Append Assistant Message with clean un-mangled formatting
                 chatContainer.innerHTML += `
                     <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
-                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">AI</div>
-                        <div class="flex-1 bg-gray-100 dark:bg-[#3a3b3c] p-4 rounded-2xl leading-relaxed text-sm shadow-sm flex flex-col gap-3">
-                            <div>${data.response}</div>
-                            ${data.generated_img ? `<img src="${data.generated_img}" class="rounded-xl max-h-80 object-cover shadow-md" alt="Generated Image">` : ''}
+                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">AI</div>
+                        <div class="flex-1 bg-white/95 dark:bg-[#3a3b3c]/95 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md flex flex-col gap-2">
+                            <div class="ai-response-content">${data.response}</div>
+                            ${data.generated_img ? `<img src="${data.generated_img}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Generated Image">` : ''}
+                            ${imagesHtml}
                         </div>
                     </div>`;
                 chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -363,11 +367,12 @@ class ChatRequest(BaseModel):
 async def handle_chat(req: ChatRequest):
     query_lower = req.query.lower()
     
-    # Check image generation keywords
+    image_keywords = ["foto", "photo", "ishuri", "school", "ifoto", "icyapa", "image", "logo", "akarango"]
+    is_image_query = any(kw in query_lower for kw in image_keywords)
+    
     gen_img_keywords = ["generate image", "kora ifoto", "shushanya", "draw", "create image", "ushushanye", "rekama ifoto", "image ya"]
     is_gen_img = any(kw in query_lower for kw in gen_img_keywords)
     
-    # Check map keywords
     map_keywords = ["map", "google map", "ahoherereye", "location", "icyerekezo", "direction", "irebe"]
     is_map = any(kw in query_lower for kw in map_keywords)
 
@@ -386,6 +391,8 @@ async def handle_chat(req: ChatRequest):
         response_text = completion.choices[0].message.content
         
         generated_img_url = None
+        local_images = []
+
         if is_gen_img:
             resp_dict = {
                 "Kinyarwanda": "Dore ifoto wasabye ko nkukorera cyangwa ko nkushushanyiriza! 🎨✨",
@@ -397,15 +404,34 @@ async def handle_chat(req: ChatRequest):
             encoded_prompt = urllib.parse.quote(req.query)
             generated_img_url = f"https://pollinations.ai/p/{encoded_prompt}?width=1024&height=1024&seed=42&nologo=true"
 
+        if is_image_query and not is_gen_img:
+            img_resp_dict = {
+                "Kinyarwanda": "Dore amafoto ajyanye na Bulinga Technical Secondary School nk'uko wabinsabye! 📸✨",
+                "English": "Here are the photos related to Bulinga Technical Secondary School as you requested! 📸✨",
+                "Français": "Voici les photos relatives à l'École Secondaire Technique de Bulinga comme demandé ! 📸✨",
+                "Kiswahili": "Hapa kuna picha zinazohusiana na Shule ya Sekondari ya Ufundi ya Bulinga kama ulivyoomba! 📸✨"
+            }
+            response_text = img_resp_dict.get(req.response_lang, img_resp_dict["English"])
+            
+            # Gushakisha btss.png na bulinga.png muri folder imwe
+            if os.path.exists("btss.png"):
+                local_images.append("/static/btss.png")
+            if os.path.exists("bulinga.png"):
+                local_images.append("/static/bulinga.png")
+
         if is_map:
             map_dict = {
-                "Kinyarwanda": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> kugira ngo ubashe kureba icyerekezo ch\'ishuri ryacu! 🗺️📍✨',
+                "Kinyarwanda": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> kugira ngo ubashe kureba icyerekezo cy\'ishuri ryacu! 🗺️📍✨',
                 "English": 'Do you want to see where the school is located? You can click here to open <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> to find the direction to our school! 🗺️📍✨',
                 "Français": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> pour trouver l\'itinéraire ! 🗺️📍✨',
                 "Kiswahili": 'Je, unataka kuona shule ilipo? Unaweza kubonyeza hapa kufungua <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> kupata mwelekeo wa shule yetu! 🗺️📍✨'
             }
             response_text = map_dict.get(req.response_lang, map_dict["English"])
 
-        return {"response": response_text, "generated_img": generated_img_url}
+        return {
+            "response": response_text, 
+            "generated_img": generated_img_url,
+            "local_images": local_images
+        }
     except Exception as e:
-        return {"response": f"❌ Habaye ikibazo mu gusubiza: `{str(e)}`", "generated_img": None}
+        return {"response": f"❌ Habaye ikibazo mu gusubiza: `{str(e)}`", "generated_img": None, "local_images": []}
