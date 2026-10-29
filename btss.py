@@ -8,7 +8,7 @@ import urllib.parse
 
 app = FastAPI(title="BULINGA TSS AI")
 
-# Guha uburenganzira bwo gusoma amafoto n'izindi dosiye (bg.jpg, btss.png, bulinga.png) biri muri folder imwe
+# Guha uburenganzira bwo gusoma amafoto n'izindi dosiye (removed.jpg, btss.png, bulinga.png) biri muri folder imwe
 app.mount("/static", StaticFiles(directory="."), name="static")
 
 # =========================================================
