@@ -8,7 +8,7 @@ import urllib.parse
 
 app = FastAPI(title="BULINGA TSS AI")
 
-# Guha uburenganzira bwo gusoma amafoto n'izindi dosiye (removed.jpg, btss.png, bulinga.png) biri muri folder imwe
+# Guha uburenganzira bwo gusoma amafoto n'izindi dosiye biri muri folder imwe
 app.mount("/static", StaticFiles(directory="."), name="static")
 
 # =========================================================
@@ -41,7 +41,7 @@ translations = {
         "thinking": "⚪ Bulinga is Thinking....... 💭",
         "img_resp": "Dore amafoto ajyanye na Bulinga Technical Secondary School nk'uko wabinsabye! 📸✨",
         "gen_img_resp": "Dore ifoto wasabye ko nkukorera cyangwa ko nkushushanyiriza! 🎨✨",
-        "map_resp": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank">Google Map</a> kugira ngo ubashe kureba icyerekezo cy\'ishuri ryacu! 🗺️📍✨'
+        "map_resp": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> kugira ngo ubashe kureba icyerekezo cy\'ishuri ryacu! 🗺️📍✨'
     },
     "English": {
         "login_title": "BULINGA TSS AI 🏫",
@@ -63,7 +63,7 @@ translations = {
         "thinking": "⚪ Bulinga is Thinking.......",
         "img_resp": "Here are the photos related to Bulinga Technical Secondary School as you requested! 📸✨",
         "gen_img_resp": "Here is the generated image you asked me to create! 🎨✨",
-        "map_resp": 'Do you want to see where the school is located? You can click here to open <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank">Google Map</a> to find the direction to our school! 🗺️📍✨'
+        "map_resp": 'Do you want to see where the school is located? You can click here to open <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> to find the direction to our school! 🗺️📍✨'
     },
     "Français": {
         "login_title": "BULINGA TSS AI 🏫",
@@ -85,7 +85,7 @@ translations = {
         "thinking": "⚪ Bulinga is Thinking.......",
         "img_resp": "Voici les photos relatives à l'École Secondaire Technique de Bulinga comme demandé !",
         "gen_img_resp": "Voici l'image générée que vous m'avez demandé de créer ! 🎨✨",
-        "map_resp": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank">Google Map</a> pour trouver l\'itinéraire ! 🗺️📍✨'
+        "map_resp": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> pour trouver l\'itinéraire ! 🗺️📍✨'
     },
     "Kiswahili": {
         "login_title": "BULINGA TSS AI 🏫",
@@ -107,7 +107,7 @@ translations = {
         "thinking": "⚪ Bulinga is Thinking.......",
         "img_resp": "Hapa kuna picha zinazohusiana na Shule ya Sekondari ya Ufundi ya Bulinga kama ulivyoomba! 📸✨",
         "gen_img_resp": "Hapa kuna picha uliyoniomba nitengeneze! 🎨✨",
-        "map_resp": 'Je, unataka kuona shule ilipo? Unaweza kubonyeza hapa kufungua <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank">Google Map</a> kupata mwelekeo wa shule yetu! 🗺️📍✨'
+        "map_resp": 'Je, unataka kuona shule ilipo? Unaweza kubonyeza hapa kufungua <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> kupata mwelekeo wa shule yetu! 🗺️📍✨'
     }
 }
 
@@ -117,7 +117,7 @@ for BULINGA TECHNICAL SECONDARY SCHOOL (BULINGA TS SCHOOL).
 
 CRITICAL RULE REGARDING CREATOR:
 - You were developed, created, and built exclusively by Developer/Programmer Kevin.
-- You must provide/give/notify someone who needs to contact Dev Kevin to visit his Portfolio Webpage: (https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B)
+- You must provide/give/notify someone who needs to contact Dev Kevin to visit his Portfolio Webpage using this nice clickable link format: <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; text-decoration: underline;">View About Developer Kevin</a>.
 - NEVER mention OpenAI, ChatGPT, or any other outside entities as your creator. If anyone asks who made you, built you, or programmed you, proudly state that you were developed and built by Developer Kevin 👨‍💻🚀 and his email: therealhacks583@gmail.com , Website: www.kevinhakiza.com (not BULINGA TSS programmers).
 
 EMOJI RULE:
@@ -259,16 +259,8 @@ async def chat_ui():
             <div id="rotatingNotice" class="text-xs text-blue-400 font-medium hidden sm:block">Urakaza neza kuri BTSS AI Assistant! 🙏✨</div>
         </header>
 
-        <!-- Chat Messages Feed -->
+        <!-- Chat Messages Feed (Ubutumwa bw'intangiriro bwavuwemo) -->
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-6">
-            <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
-                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden p-1">
-                    <img src="/static/btss.png" class="w-full h-full object-contain" alt="BTSS">
-                </div>
-                <div class="flex-1 bg-white/90 dark:bg-[#3a3b3c]/90 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md ai-response-content">
-                    Murakaza neza kuri Bulinga TSS AI! Baza icyo ushaka cyose cyangwa se ubaze amakuru y'ishuri ryacu. 🏫✨
-                </div>
-            </div>
         </div>
 
         <!-- Chat Input Form -->
@@ -297,6 +289,11 @@ async def chat_ui():
         function logout() {
             alert('Logged out successfully!');
             location.reload();
+        }
+
+        // Guhindura uburyo bwo gutinda ho amasegonda 4 (4 seconds delay) hamwe na Bulinga is Thinking.......
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
         }
 
         async function sendMessage(e) {
@@ -330,6 +327,9 @@ async def chat_ui():
             const respLang = document.getElementById('respLang').value;
 
             try {
+                // Gutinda amasegonda 4 mbere yo kohereza cyangwa gusubiza (4 seconds delay)
+                await wait(4000);
+
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -339,7 +339,7 @@ async def chat_ui():
                 
                 document.getElementById(thinkingId).remove();
 
-                // Build local images html if requested
+                // Build local images html if requested (Nta foto ya btss.png yitana mu nyandiko keretse umukoresha yayisabye)
                 let imagesHtml = '';
                 if (data.local_images && data.local_images.length > 0) {
                     data.local_images.forEach(imgUrl => {
@@ -347,7 +347,7 @@ async def chat_ui():
                     });
                 }
 
-                // Append Assistant Message with btss.png icon avatar instead of "AI" text
+                // Append Assistant Message n'ibirimo (Nta foto yikora muri response keretse niba ari generated cyangwa local image)
                 chatContainer.innerHTML += `
                     <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
                         <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden p-1">
@@ -355,7 +355,6 @@ async def chat_ui():
                         </div>
                         <div class="flex-1 bg-white/95 dark:bg-[#3a3b3c]/95 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md flex flex-col gap-2">
                             <div class="ai-response-content">${data.response}</div>
-                            <img src="/static/btss.png" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Bulinga TSS Logo/Photo">
                             ${data.generated_img ? `<img src="${data.generated_img}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Generated Image">` : ''}
                             ${imagesHtml}
                         </div>
