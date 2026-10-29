@@ -38,7 +38,7 @@ translations = {
         "clear_history": "🗑️ Hanagura Amateka y'Ibiganiro",
         "main_title": "Umufasha wa BULINGA TSS",
         "chat_placeholder": "Baza icyo ushaka cyose cyangwa wandike uti 'Amakuru ya Bulinga...' 💬",
-        "thinking": "⚪ BULINGA AI irimo gutekereza... 💭",
+        "thinking": "⚪ Bulinga is Thinking....... 💭",
         "img_resp": "Dore amafoto ajyanye na Bulinga Technical Secondary School nk'uko wabinsabye! 📸✨",
         "gen_img_resp": "Dore ifoto wasabye ko nkukorera cyangwa ko nkushushanyiriza! 🎨✨",
         "map_resp": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank">Google Map</a> kugira ngo ubashe kureba icyerekezo cy\'ishuri ryacu! 🗺️📍✨'
@@ -60,7 +60,7 @@ translations = {
         "clear_history": "🗑️ Clear Current History",
         "main_title": "BULINGA AI Assistant",
         "chat_placeholder": "Ask anything or type like 'What about Bulinga info...' 💬",
-        "thinking": "⚪ BULINGA AI is thinking....",
+        "thinking": "⚪ Bulinga is Thinking.......",
         "img_resp": "Here are the photos related to Bulinga Technical Secondary School as you requested! 📸✨",
         "gen_img_resp": "Here is the generated image you asked me to create! 🎨✨",
         "map_resp": 'Do you want to see where the school is located? You can click here to open <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank">Google Map</a> to find the direction to our school! 🗺️📍✨'
@@ -82,7 +82,7 @@ translations = {
         "clear_history": "🗑️ Effacer l'historique actuel",
         "main_title": "Assistant IA BULINGA",
         "chat_placeholder": "Posez une question ou tapez 'générer une image de...' 💬",
-        "thinking": "⚪ BULINGA AI réfléchit....",
+        "thinking": "⚪ Bulinga is Thinking.......",
         "img_resp": "Voici les photos relatives à l'École Secondaire Technique de Bulinga comme demandé !",
         "gen_img_resp": "Voici l'image générée que vous m'avez demandé de créer ! 🎨✨",
         "map_resp": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank">Google Map</a> pour trouver l\'itinéraire ! 🗺️📍✨'
@@ -104,7 +104,7 @@ translations = {
         "clear_history": "🗑️ Futa Historia ya Sasa",
         "main_title": "Msaidizi wa AI wa BULINGA",
         "chat_placeholder": "Uliza chochote auandike 'tengeneza picha ya...' 💬",
-        "thinking": "⚪ BULINGA AI inafikiri....",
+        "thinking": "⚪ Bulinga is Thinking.......",
         "img_resp": "Hapa kuna picha zinazohusiana na Shule ya Sekondari ya Ufundi ya Bulinga kama ulivyoomba! 📸✨",
         "gen_img_resp": "Hapa kuna picha uliyoniomba nitengeneze! 🎨✨",
         "map_resp": 'Je, unataka kuona shule ilipo? Unaweza kubonyeza hapa kufungua <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank">Google Map</a> kupata mwelekeo wa shule yetu! 🗺️📍✨'
@@ -262,7 +262,9 @@ async def chat_ui():
         <!-- Chat Messages Feed -->
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-6">
             <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
-                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">AI</div>
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden p-1">
+                    <img src="/static/btss.png" class="w-full h-full object-contain" alt="BTSS">
+                </div>
                 <div class="flex-1 bg-white/90 dark:bg-[#3a3b3c]/90 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md ai-response-content">
                     Murakaza neza kuri Bulinga TSS AI! Baza icyo ushaka cyose cyangwa se ubaze amakuru y'ishuri ryacu. 🏫✨
                 </div>
@@ -314,12 +316,14 @@ async def chat_ui():
             inputField.value = '';
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            // Thinking Bubble
+            // Thinking Bubble with "Bulinga is Thinking......."
             const thinkingId = 'thinking-' + Date.now();
             chatContainer.innerHTML += `
                 <div id="${thinkingId}" class="flex items-start gap-4 max-w-3xl mx-auto w-full">
-                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">AI</div>
-                    <div class="bg-white/90 dark:bg-[#3a3b3c]/90 backdrop-blur p-4 rounded-2xl italic text-gray-400 text-sm shadow-md">⚪ BULINGA AI irimo gutekereza... 💭</div>
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden p-1">
+                        <img src="/static/btss.png" class="w-full h-full object-contain" alt="BTSS">
+                    </div>
+                    <div class="bg-white/90 dark:bg-[#3a3b3c]/90 backdrop-blur p-4 rounded-2xl italic text-gray-400 text-sm shadow-md">⚪ Bulinga is Thinking....... 💭</div>
                 </div>`;
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -343,10 +347,12 @@ async def chat_ui():
                     });
                 }
 
-                // Append Assistant Message with clean un-mangled formatting including btss.png
+                // Append Assistant Message with btss.png icon avatar instead of "AI" text
                 chatContainer.innerHTML += `
                     <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
-                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">AI</div>
+                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden p-1">
+                            <img src="/static/btss.png" class="w-full h-full object-contain" alt="BTSS">
+                        </div>
                         <div class="flex-1 bg-white/95 dark:bg-[#3a3b3c]/95 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md flex flex-col gap-2">
                             <div class="ai-response-content">${data.response}</div>
                             <img src="/static/btss.png" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Bulinga TSS Logo/Photo">
