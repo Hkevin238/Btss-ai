@@ -179,9 +179,9 @@ async def chat_ui():
         }
         .moving-title { animation: bounceSlow 3s ease-in-out infinite; display: inline-block; }
         
-        /* Custom Background Image removed.jpg styling with smooth overlay */
+        /* Custom Background Image removed.jpg fully visible with light overlay */
         .app-bg {
-            background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('/static/removed.jpg');
+            background-image: linear-gradient(rgba(18, 18, 18, 0.25), rgba(18, 18, 18, 0.25)), url('/static/removed.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -278,7 +278,7 @@ async def chat_ui():
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
             </form>
-            <div class="text-center text-[11px] text-gray-300 mt-2">Developed with ❤️ by Developer Kevin • Bulinga TSS AI</div>
+            <div class="text-center text-[11px] text-gray-300 mt-2">Developed by Developer Kevin • Bulinga TSS AI</div>
         </div>
     </main>
 
@@ -343,12 +343,13 @@ async def chat_ui():
                     });
                 }
 
-                // Append Assistant Message with clean un-mangled formatting
+                // Append Assistant Message with clean un-mangled formatting including btss.png
                 chatContainer.innerHTML += `
                     <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
                         <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">AI</div>
                         <div class="flex-1 bg-white/95 dark:bg-[#3a3b3c]/95 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md flex flex-col gap-2">
                             <div class="ai-response-content">${data.response}</div>
+                            <img src="/static/btss.png" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Bulinga TSS Logo/Photo">
                             ${data.generated_img ? `<img src="${data.generated_img}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Generated Image">` : ''}
                             ${imagesHtml}
                         </div>
