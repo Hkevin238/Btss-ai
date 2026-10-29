@@ -83,7 +83,7 @@ translations = {
         "main_title": "Assistant IA BULINGA",
         "chat_placeholder": "Posez une question ou tapez 'générer une image de...' 💬",
         "thinking": "⚪ BULINGA AI réfléchit....",
-        "img_resp": "Voici les photos relatives à l'École Secondaire Technique de Bulinga comme demandé ! 📸✨",
+        "img_resp": "Voici les photos relatives à l'École Secondaire Technique de Bulinga comme demandé !",
         "gen_img_resp": "Voici l'image générée que vous m'avez demandé de créer ! 🎨✨",
         "map_resp": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank">Google Map</a> pour trouver l\'itinéraire ! 🗺️📍✨'
     },
@@ -117,7 +117,7 @@ for BULINGA TECHNICAL SECONDARY SCHOOL (BULINGA TS SCHOOL).
 
 CRITICAL RULE REGARDING CREATOR:
 - You were developed, created, and built exclusively by Developer/Programmer Kevin.
-- You must provide/give/notify someone who needs to contact Dev Kevin to visit his Portfolio Webpage: (https://lovable.dev/projects/2d0e0900-16e8-4e8c-90fe-b2df1c0999c2)
+- You must provide/give/notify someone who needs to contact Dev Kevin to visit his Portfolio Webpage: (https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B)
 - NEVER mention OpenAI, ChatGPT, or any other outside entities as your creator. If anyone asks who made you, built you, or programmed you, proudly state that you were developed and built by Developer Kevin 👨‍💻🚀 and his email: therealhacks583@gmail.com , Website: www.kevinhakiza.com (not BULINGA TSS programmers).
 
 EMOJI RULE:
@@ -179,9 +179,9 @@ async def chat_ui():
         }
         .moving-title { animation: bounceSlow 3s ease-in-out infinite; display: inline-block; }
         
-        /* Custom Background Image bg.jpg styling with smooth overlay */
+        /* Custom Background Image removed.jpg styling with smooth overlay */
         .app-bg {
-            background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('/static/bg.jpg');
+            background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('/static/removed.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -235,6 +235,11 @@ async def chat_ui():
             <button onclick="clearHistory()" class="w-full py-2 px-3 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 text-sm font-medium transition">
                 🗑️ Clear Chat History
             </button>
+
+            <!-- View About Developer Kevin Button/Link -->
+            <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
+                👨‍💻 View About Developer Kevin
+            </a>
         </div>
 
         <div class="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between text-sm">
@@ -258,7 +263,7 @@ async def chat_ui():
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-6">
             <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
                 <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">AI</div>
-                <div class="flex-1 bg-white/9idity dark:bg-[#3a3b3c]/90 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md ai-response-content">
+                <div class="flex-1 bg-white/90 dark:bg-[#3a3b3c]/90 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md ai-response-content">
                     Murakaza neza kuri Bulinga TSS AI! Baza icyo ushaka cyose cyangwa se ubaze amakuru y'ishuri ryacu. 🏫✨
                 </div>
             </div>
@@ -408,7 +413,7 @@ async def handle_chat(req: ChatRequest):
             img_resp_dict = {
                 "Kinyarwanda": "Dore amafoto ajyanye na Bulinga Technical Secondary School nk'uko wabinsabye! 📸✨",
                 "English": "Here are the photos related to Bulinga Technical Secondary School as you requested! 📸✨",
-                "Français": "Voici les photos relatives à l'École Secondaire Technique de Bulinga comme demandé ! 📸✨",
+                "Français": "Voici les photos relatives à l'École Secondaire Technique de Bulinga comme demandé !",
                 "Kiswahili": "Hapa kuna picha zinazohusiana na Shule ya Sekondari ya Ufundi ya Bulinga kama ulivyoomba! 📸✨"
             }
             response_text = img_resp_dict.get(req.response_lang, img_resp_dict["English"])
