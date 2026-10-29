@@ -139,7 +139,7 @@ Programs & Combinations:
 - Computer system and architecture (Levels 3, 4, 5)
 - Accounting (Senior 4, 5, 6) OR (year 1, year 2, year 3)
 Student & Staff Stats: Approximately 582 students, 32 trainers and support personnel.
-Contacts: Headmaster (0788546462) MUVUNYI Noel (Umuyobozi Mukuru W'ishuri), Bursar (0782612675), DOD (0785979951) NIYUKURI Adrien, DOS (0784020929) Vital 📞.
+Contacts: Headmaster (0788546462) MUVUNYI Noel  (Umuyobozi Mukuru W'ishuri), Bursar (0782612675), DOD (0785979951) NIYUKURI Adrien, DOS (0784020929) Vital 📞.
 """
 
 # =========================================================
@@ -153,7 +153,8 @@ async def chat_ui():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BULINGA TSS AI - ChatGPT / Gemini Style</title>
+    <title>BULINGA TSS AI</title>
+    <link rel="icon" type="image/png" href="/static/btss.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -259,7 +260,7 @@ async def chat_ui():
             <div id="rotatingNotice" class="text-xs text-blue-400 font-medium hidden sm:block">Urakaza neza kuri BTSS AI Assistant! 🙏✨</div>
         </header>
 
-        <!-- Chat Messages Feed (Ubutumwa bw'intangiriro bwavuwemo) -->
+        <!-- Chat Messages Feed -->
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-6">
         </div>
 
@@ -291,7 +292,7 @@ async def chat_ui():
             location.reload();
         }
 
-        // Guhindura uburyo bwo gutinda ho amasegonda 4 (4 seconds delay) hamwe na Bulinga is Thinking.......
+        // Guhindura uburyo bwo gutinda ho amasegonda 3 (3 seconds delay)
         function wait(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
@@ -327,8 +328,8 @@ async def chat_ui():
             const respLang = document.getElementById('respLang').value;
 
             try {
-                // Gutinda amasegonda 4 mbere yo kohereza cyangwa gusubiza (4 seconds delay)
-                await wait(4000);
+                // Gutinda amasegonda 3 mbere yo gusubiza (3 seconds delay)
+                await wait(3000);
 
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -339,7 +340,7 @@ async def chat_ui():
                 
                 document.getElementById(thinkingId).remove();
 
-                // Build local images html if requested (Nta foto ya btss.png yitana mu nyandiko keretse umukoresha yayisabye)
+                // Build local images html if requested
                 let imagesHtml = '';
                 if (data.local_images && data.local_images.length > 0) {
                     data.local_images.forEach(imgUrl => {
@@ -347,7 +348,7 @@ async def chat_ui():
                     });
                 }
 
-                // Append Assistant Message n'ibirimo (Nta foto yikora muri response keretse niba ari generated cyangwa local image)
+                // Append Assistant Message
                 chatContainer.innerHTML += `
                     <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
                         <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden p-1">
