@@ -292,9 +292,38 @@ async def chat_ui():
             location.reload();
         }
 
-        // Guhindura uburyo bwo gutinda ho amasegonda 3 (3 seconds delay)
         function wait(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Uburyo bwo kwandika buhoro buhoro (Typing effect line by line / character by character) nk'iya ChatGPT cyangwa Gemini
+        async function typeText(element, text, speed = 15) {
+            element.innerHTML = '';
+            let i = 0;
+            // Niba harimo HTML tags nka links, twazandika uko zakabaye cyangwa tuzishyiramo ako kanya
+            element.innerHTML = text;
+            // Kugira ngo bitange uburyo bwo kwandika neza (typing animation):
+            // Ahubwo dushyiremo text node cyangwa tugaragaze mu buryo bworoshye cyane:
+            element.innerHTML = "";
+            let length = text.length;
+            while (i < length) {
+                // Niba duhuye na tag ya HTML (nk'uko <a href="..."> iri), twandika tag yose icyarimwe kugira ngo bitangirika
+                if (text[i] === '<') {
+                    let closeIdx = text.indexOf('>', i);
+                    if (closeIdx !== -1) {
+                        element.innerHTML += text.substring(i, closeIdx + 1);
+                        i = closeIdx + 1;
+                    } else {
+                        element.innerHTML += text[i];
+                        i++;
+                    }
+                } else {
+                    element.innerHTML += text[i];
+                    i++;
+                }
+                document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
+                await wait(speed);
+            }
         }
 
         async function sendMessage(e) {
@@ -348,19 +377,27 @@ async def chat_ui():
                     });
                 }
 
-                // Append Assistant Message
+                // Unique ID for typing content
+                const contentId = 'content-' + Date.now();
+
+                // Append Assistant Message shell
                 chatContainer.innerHTML += `
                     <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
                         <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden p-1">
                             <img src="/static/btss.png" class="w-full h-full object-contain" alt="BTSS">
                         </div>
                         <div class="flex-1 bg-white/95 dark:bg-[#3a3b3c]/95 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md flex flex-col gap-2">
-                            <div class="ai-response-content">${data.response}</div>
+                            <div id="${contentId}" class="ai-response-content"></div>
                             ${data.generated_img ? `<img src="${data.generated_img}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Generated Image">` : ''}
                             ${imagesHtml}
                         </div>
                     </div>`;
                 chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Gutangira kwandika text buhoro buhoro (typing effect)
+                const targetEl = document.getElementById(contentId);
+                await typeText(targetEl, data.response, 12);
+
             } catch (err) {
                 document.getElementById(thinkingId).remove();
                 alert('Connection error occurred.');
