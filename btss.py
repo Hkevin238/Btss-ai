@@ -249,7 +249,7 @@ async def chat_ui():
             </button>
 
             <!-- View About Developer Kevin Button/Link -->
-            <a id="devLinkBtn" href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
+            <a id="devLinkBtn" href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="https://lovable.dev/share-preview/2d0e0900-16e8-4e8c-90fe-b2df1c0999c2#preview_url=https%3A%2F%2Fid-preview--2d0e0900-16e8-4e8c-90fe-b2df1c0999c2.lovable.app%3F__lovable_token%3DeyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9qZWN0X2lkIjoiMmQwZTA5MDAtMTZlOC00ZThjLTkwZmUtYjJkZjFjMDk5OWMyIiwiYWNjZXNzX3R5cGUiOiJ2aWV3ZXIiLCJpc3MiOiJsb3ZhYmxlLWFwaSIsInN1YiI6IjJkMGUwOTAwLTE2ZTgtNGU4Yy05MGZlLWIyZGYxYzA5OTljMiIsImF1ZCI6WyJsb3ZhYmxlLWFwcCJdLCJleHAiOjE3OTM4OTU2NTYsIm5iZiI6MTc5MzU0MDUwNCwiaWF0IjoxNzkzNTQwNTA0LCJqdGkiOiJiZWJjZGE1Yy01OGUwLTQyZWItODdlOC0wOTdlZjE3ODJmYmEifQ.jCTA4lGQfuEw1h6mDZ0OKUn-XhKQXi766P5bbUISYFdCmyhWP8LzVFpWIRRxLPysrg5Z6yNNCBZ4h16e5JJWSlXWbD0AFKUIgUNIbskKPSUNDj2WedMjLjjYBdEtgDLfhjAbGiTijVJ-N0o4JtZTOxG8EGMGvyYkPmVvGwLAN1vTqDRsFQm7FYYp9RdgNqOt3Zh1s5-TwsWmXPfk0DgXOLuLCVOBRLaMEaW7Qz7jWeD3UMV5L8zKYrpW_AS_Zaok1XhnmvJMCXBCi9q8Rca1NFM39b7bFOnuSuDk6HzVHjl4O5ED8HTPDvqcvGjZNoSw4b9VTOHOouzUDjjWu9cKNJz0YoOh59ywujmyftHMUx5SpZC9IcTYEq3pGdb4DMtSlG7a54nSexSBM9YNabJkHUBSpC0xZE2lKpEaAYy6CewK3CziwlFHgT0KDW_xl9jePPADXngBrUYnvERSwtsfHJGIddIalDnC2aLolIN9sE9d2_4IxWfMNQpY_2HW97xQ" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
                 👨‍💻 View About Developer Kevin
             </a>
         </div>
