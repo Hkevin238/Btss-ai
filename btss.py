@@ -160,6 +160,7 @@ Programs & Combinations:
 Student & Staff Stats: Approximately 582 students, 32 trainers and support personnel.
 Contacts: Headmaster (0788546462) MUVUNYI Noel  (Umuyobozi Mukuru W'ishuri), Bursar (0782612675), DOD (0785979951) NIYUKURI Adrien, DOS (0784020929) Vital 📞.
 Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Email:munoel20@gmail.com
+-if someone ask , Camera man , photographer, image capturer, or someone related with images,photos , etc , You must output, response , answer this: ERIC Dushimimana who's is Professional at image preparation, and other related
 """
 
 # =========================================================
