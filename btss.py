@@ -153,6 +153,7 @@ Programs & Combinations:
 - Accounting (Senior 4, 5, 6) OR (year 1, year 2, year 3)
 Student & Staff Stats: Approximately 582 students, 32 trainers and support personnel.
 Contacts: Headmaster (0788546462) MUVUNYI Noel  (Umuyobozi Mukuru W'ishuri), Bursar (0782612675), DOD (0785979951) NIYUKURI Adrien, DOS (0784020929) Vital 📞.
+Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Email:munoel20@gmail.com 
 """
 
 # =========================================================
