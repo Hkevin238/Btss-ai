@@ -137,12 +137,12 @@ EMOJI RULE:
 - Always include relevant, cool, and engaging emojis (such as 🏫, 📚, 💡, ✨, 👨‍💻, 👍, 💕, 👀, 😃, 🤗, 🔥 etc.) in your responses to make them lively and friendly.
 
 FORMATTING & COLOR RULES:
-- When writing responses, you are fully empowered and required to use **bold formatting** (e.g., <b>bold</b> or markdown equivalents) for emphasis on key terms, names, and titles.
-- You can and should output text in **different colors** using HTML span tags with inline styles (e.g., <span style="color: #4dabf7;">blue text</span>, <span style="color: #ff6b6b;">red text</span>, <span style="color: #51cf66;">green text</span>, <span style="color: #ffd43b;">yellow text</span>) depending on what the user needs or to make the text engaging and colorful!
+- When writing responses, you are fully empowered and required to use bold formatting (e.g., <b>bold</b> or markdown equivalents) for emphasis on key terms, names, and titles.
+- You can and should output text in different colors using HTML span tags with inline styles (e.g., <span style="color: #4dabf7;">blue text</span>, <span style="color: #ff6b6b;">red text</span>, <span style="color: #51cf66;">green text</span>, <span style="color: #ffd43b;">yellow text</span>) depending on what the user needs or to make the text engaging and colorful!
 
 CORE RULE & INSTANT LINK REQUIREMENT:
 - You are a helpful, smart, and versatile assistant. Answer any questions the user asks—whether it's about general knowledge, coding, science, mathematics, geography, history, everyday life, or specific details about BULINGA TVET SCHOOL. Never refuse to answer general questions; be helpful and accurate on all topics while proudly representing BULINGA TVET SCHOOL! 🌍💡
-- You must provide INSTANT CLICKABLE LINKS: Whenever a user asks for a link, Google map, email, website, phone contact, portfolio, or any web resource, you MUST instantly provide a fully functional, clickable HTML anchor tag (`<a href="..." target="_blank" style="color: #4dabf7; text-decoration: underline;">...</a>`) so they can easily click and get redirected immediately!
+- You must provide INSTANT CLICKABLE LINKS: Whenever a user asks for a link, Google map, email, website, phone contact(numbers), portfolio, or any web resource, you MUST instantly provide a fully functional, clickable HTML anchor tag (`<a href="..." target="_blank" style="color: #4dabf7; text-decoration: underline;">...</a>`) so they can easily click and get redirected immediately!
 - Style words like <span style="color: #ff7675;">Email</span>, <span style="color: #55efc4;">Website</span>, <span style="color: #74b9ff;">Phone number</span>, <span style="color: #a29bfe;">Google map link</span>, etc., with distinct colors when necessary, ensuring different words do not share the exact same plain color.
 
 SCHOOL DETAILS & STRATEGIC PLAN (2026-2030):
@@ -160,6 +160,10 @@ Programs & Combinations:
 Student & Staff Stats: Approximately 582 students, 32 trainers and support personnel.
 Contacts: Headmaster (0788546462) MUVUNYI Noel  (Umuyobozi Mukuru W'ishuri), Bursar (0782612675), DOD (0785979951) NIYUKURI Adrien, DOS (0784020929) Vital 📞.
 Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Email:munoel20@gmail.com
+-Detect ,Listen carefully,Analyse the users request or prompt in order to respond clearly the user needs , wants ,request.
+-You must avoid specify , notify ,provide the direct info about Kevin, DOS ,DOD ,HOD , etc while you are asked to provide.
+-You must generate , create the attractive clickable google map link of Bulinga which include these(https://www.google.com/maps/place/Bulinga/@-1.995589,29.703555,758m/data=!3m2!1e3!4b1!4m6!3m5!1s0x19dcc6049eb61033:0x981c134ac3a66bfd!8m2!3d-1.9969026!4d29.7064051!16s%2Fg%2F1tkzjh6d?entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D) and then Type , write on it this word : See Location of Bulinga on Google map.
+-You must also give the Google Map Clickable link of BULINGA TSS which includes(https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3033m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D) and then Type , write on it this word: See Location of Bulinga TSS on Google map
 -if someone ask , Camera man , photographer, image capturer, or someone related with images,photos , etc , You must output, response , answer this: ERIC Dushimimana who's is Professional at image preparation, and other related
 """
 
@@ -315,7 +319,7 @@ async def chat_ui():
                 "logout": "Sohoka",
                 "main_title": "BULINGA AI Assistant 🚀",
                 "placeholder": "Baza icyo ushaka cyose cyangwa wandike 'Amakuru ya Bulinga'...",
-                "footer": "Developed by Developer Kevin • Bulinga TSS AI",
+                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking....... 💭"
             },
             "English": {
@@ -327,7 +331,7 @@ async def chat_ui():
                 "logout": "Logout",
                 "main_title": "BULINGA AI Assistant 🚀",
                 "placeholder": "Ask anything or type like 'What about Bulinga info...'",
-                "footer": "Developed by Developer Kevin • Bulinga TSS AI",
+                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             },
             "Français": {
@@ -339,7 +343,7 @@ async def chat_ui():
                 "logout": "Se déconnecter",
                 "main_title": "Assistant IA BULINGA 🚀",
                 "placeholder": "Posez une question ou tapez 'Amakuru ya Bulinga'...",
-                "footer": "Developed by Developer Kevin • Bulinga TSS AI",
+                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             },
             "Kiswahili": {
@@ -351,7 +355,7 @@ async def chat_ui():
                 "logout": "Toka",
                 "main_title": "Msaidizi wa AI wa BULINGA 🚀",
                 "placeholder": "Uliza chochote auandike 'Amakuru ya Bulinga'...",
-                "footer": "Developed by Developer Kevin • Bulinga TSS AI",
+                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             }
         };
@@ -471,14 +475,14 @@ async def chat_ui():
             if (isImgQuery) {
                 const textEl = document.getElementById(`${thinkingId}-text`);
                 await wait(800);
-                textEl.innerText = "Your image is generating.......";
+                textEl.innerText = "Generating your image.......";
                 await wait(800);
                 textEl.innerText = "Please wait a moment......";
                 await wait(800);
                 textEl.innerText = "Be ready to see a Magic 🪄";
                 await wait(800);
             } else {
-                await wait(1200); // Faster response time as requested
+                await wait(120); // Faster response time as requested
             }
 
             try {
