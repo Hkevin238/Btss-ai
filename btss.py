@@ -138,6 +138,8 @@ EMOJI RULE:
 
 CORE RULE:
 You are a helpful, smart, and versatile assistant. Answer any questions the user asks—whether it's about general knowledge, coding, science, mathematics, geography, history, everyday life, or specific details about BULINGA TVET SCHOOL. Never refuse to answer general questions; be helpful and accurate on all topics while proudly representing BULINGA TVET SCHOOL! 🌍💡
+When you are providing a link , You must provide a clickable link if a user ask ; Google map , email or website. 
+Styling the words like ;Email, Website , Phone number,Google map link , etc like these if neccessary , not provide the same color on all words
 
 SCHOOL DETAILS & STRATEGIC PLAN (2026-2030):
 School Name: BULINGA TECHNICAL SECONDARY SCHOOL (BULINGA TSS) 🏫
@@ -394,66 +396,7 @@ async def chat_ui():
             }
         }
 
-        // Turn plain URLs, emails and phone numbers into colored clickable links.
-        // Existing HTML links (such as the Google Maps link) are preserved.
-        function formatResponseHtml(rawText) {
-            const parts = String(rawText || "").split(/(<a\b[^>]*>[\s\S]*?<\/a>)/gi);
-
-            return parts.map(part => {
-                if (/^<a\b/i.test(part)) return part;
-
-                let html = part
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;");
-
-                // Color common profile/contact labels according to their type.
-                html = html.replace(
-                    /(^|\n)(\s*)(Website|Web|Urubuga|Email|E-mail|Phone|Telephone|Tel|Mobile|Address|Location|Google Map|Map)\s*:/gi,
-                    (match, lineStart, spaces, label) => {
-                        const key = label.toLowerCase();
-                        let color = "#38bdf8";
-                        if (key.includes("email") || key.includes("e-mail")) color = "#a78bfa";
-                        else if (["phone", "telephone", "tel", "mobile"].includes(key)) color = "#22c55e";
-                        else if (["address", "location"].includes(key)) color = "#f59e0b";
-                        else if (key.includes("map")) color = "#ec4899";
-                        return `${lineStart}${spaces}<strong style="color:${color}">${label}:</strong>`;
-                    }
-                );
-
-                // Make email addresses clickable.
-                html = html.replace(
-                    /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi,
-                    '<a href="mailto:$1" style="color:#a78bfa;text-decoration:underline;font-weight:600;">$1</a>'
-                );
-
-                // Make full web addresses and www domains clickable.
-                html = html.replace(
-                    /(^|[\s(])((?:https?:\/\/|www\.)[^\s<]+)/gi,
-                    (match, prefix, address) => {
-                        const cleanAddress = address.replace(/[),.;!?]+$/, "");
-                        const trailing = address.slice(cleanAddress.length);
-                        const href = cleanAddress.toLowerCase().startsWith("www.")
-                            ? "https://" + cleanAddress
-                            : cleanAddress;
-                        return `${prefix}<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:underline;font-weight:600;">${cleanAddress}</a>${trailing}`;
-                    }
-                );
-
-                // Make phone numbers clickable.
-                html = html.replace(
-                    /(^|[\s:])(\+?\d[\d\s().-]{6,}\d)(?=$|[\s<])/g,
-                    (match, prefix, number) => {
-                        const digits = number.replace(/[^\d+]/g, "");
-                        return `${prefix}<a href="tel:${digits}" style="color:#22c55e;text-decoration:underline;font-weight:600;">${number}</a>`;
-                    }
-                );
-
-                return html;
-            }).join("");
-        }
-
-        async function typeText(element, text, speed = 1) {
+        async function typeText(element, text, speed = 15) {
             element.innerHTML = "";
             let length = text.length;
             let i = 0;
@@ -525,7 +468,15 @@ async def chat_ui():
             
             if (isImgQuery) {
                 const textEl = document.getElementById(`${thinkingId}-text`);
-                textEl.innerText = "Preparing your response... ⚡";
+                await wait(1000);
+                textEl.innerText = "Your image is generating.......";
+                await wait(1000);
+                textEl.innerText = "Please wait a moment......";
+                await wait(1000);
+                textEl.innerText = "Be ready to see a Magic 🪄";
+                await wait(1000);
+            } else {
+                await wait(2500);
             }
 
             try {
@@ -572,7 +523,7 @@ async def chat_ui():
                 chatContainer.scrollTop = chatContainer.scrollHeight;
 
                 const targetEl = document.getElementById(contentId);
-                await typeText(targetEl, formatResponseHtml(data.response), 1);
+                await typeText(targetEl, data.response, 12);
 
             } catch (err) {
                 document.getElementById(thinkingId).remove();
