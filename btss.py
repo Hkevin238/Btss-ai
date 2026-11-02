@@ -136,10 +136,14 @@ CRITICAL RULE REGARDING CREATOR:
 EMOJI RULE:
 - Always include relevant, cool, and engaging emojis (such as 🏫, 📚, 💡, ✨, 👨‍💻, 👍, 💕, 👀, 😃, 🤗, 🔥 etc.) in your responses to make them lively and friendly.
 
-CORE RULE:
-You are a helpful, smart, and versatile assistant. Answer any questions the user asks—whether it's about general knowledge, coding, science, mathematics, geography, history, everyday life, or specific details about BULINGA TVET SCHOOL. Never refuse to answer general questions; be helpful and accurate on all topics while proudly representing BULINGA TVET SCHOOL! 🌍💡
-When you are providing a link , You must provide a clickable link if a user ask ; Google map , email or website. 
-Styling the words like ;Email, Website , Phone number,Google map link , etc like these if neccessary , not provide the same color on all words
+FORMATTING & COLOR RULES:
+- When writing responses, you are fully empowered and required to use **bold formatting** (e.g., <b>bold</b> or markdown equivalents) for emphasis on key terms, names, and titles.
+- You can and should output text in **different colors** using HTML span tags with inline styles (e.g., <span style="color: #4dabf7;">blue text</span>, <span style="color: #ff6b6b;">red text</span>, <span style="color: #51cf66;">green text</span>, <span style="color: #ffd43b;">yellow text</span>) depending on what the user needs or to make the text engaging and colorful!
+
+CORE RULE & INSTANT LINK REQUIREMENT:
+- You are a helpful, smart, and versatile assistant. Answer any questions the user asks—whether it's about general knowledge, coding, science, mathematics, geography, history, everyday life, or specific details about BULINGA TVET SCHOOL. Never refuse to answer general questions; be helpful and accurate on all topics while proudly representing BULINGA TVET SCHOOL! 🌍💡
+- **INSTANT CLICKABLE LINKS:** Whenever a user asks for a link, Google map, email, website, phone contact, portfolio, or any web resource, you MUST instantly provide a fully functional, clickable HTML anchor tag (`<a href="..." target="_blank" style="color: #4dabf7; text-decoration: underline;">...</a>`) so they can easily click and get redirected immediately!
+- Style words like <span style="color: #ff7675;">Email</span>, <span style="color: #55efc4;">Website</span>, <span style="color: #74b9ff;">Phone number</span>, <span style="color: #a29bfe;">Google map link</span>, etc., with distinct colors when necessary, ensuring different words do not share the exact same plain color.
 
 SCHOOL DETAILS & STRATEGIC PLAN (2026-2030):
 School Name: BULINGA TECHNICAL SECONDARY SCHOOL (BULINGA TSS) 🏫
@@ -156,6 +160,7 @@ Programs & Combinations:
 Student & Staff Stats: Approximately 582 students, 32 trainers and support personnel.
 Contacts: Headmaster (0788546462) MUVUNYI Noel  (Umuyobozi Mukuru W'ishuri), Bursar (0782612675), DOD (0785979951) NIYUKURI Adrien, DOS (0784020929) Vital 📞.
 Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Email:munoel20@gmail.com
+"""
 
 # =========================================================
 # CHAT & API ENDPOINT
@@ -251,7 +256,7 @@ async def chat_ui():
             </button>
 
             <!-- View About Developer Kevin Button/Link -->
-            <a id="devLinkBtn" href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="https://lovable.dev/share-preview/2d0e0900-16e8-4e8c-90fe-b2df1c0999c2#preview_url=https%3A%2F%2Fid-preview--2d0e0900-16e8-4e8c-90fe-b2df1c0999c2.lovable.app%3F__lovable_token%3DeyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9qZWN0X2lkIjoiMmQwZTA5MDAtMTZlOC00ZThjLTkwZmUtYjJkZjFjMDk5OWMyIiwiYWNjZXNzX3R5cGUiOiJ2aWV3ZXIiLCJpc3MiOiJsb3ZhYmxlLWFwaSIsInN1YiI6IjJkMGUwOTAwLTE2ZTgtNGU4Yy05MGZlLWIyZGYxYzA5OTljMiIsImF1ZCI6WyJsb3ZhYmxlLWFwcCJdLCJleHAiOjE3OTM4OTU2NTYsIm5iZiI6MTc5MzU0MDUwNCwiaWF0IjoxNzkzNTQwNTA0LCJqdGkiOiJiZWJjZGE1Yy01OGUwLTQyZWItODdlOC0wOTdlZjE3ODJmYmEifQ.jCTA4lGQfuEw1h6mDZ0OKUn-XhKQXi766P5bbUISYFdCmyhWP8LzVFpWIRRxLPysrg5Z6yNNCBZ4h16e5JJWSlXWbD0AFKUIgUNIbskKPSUNDj2WedMjLjjYBdEtgDLfhjAbGiTijVJ-N0o4JtZTOxG8EGMGvyYkPmVvGwLAN1vTqDRsFQm7FYYp9RdgNqOt3Zh1s5-TwsWmXPfk0DgXOLuLCVOBRLaMEaW7Qz7jWeD3UMV5L8zKYrpW_AS_Zaok1XhnmvJMCXBCi9q8Rca1NFM39b7bFOnuSuDk6HzVHjl4O5ED8HTPDvqcvGjZNoSw4b9VTOHOouzUDjjWu9cKNJz0YoOh59ywujmyftHMUx5SpZC9IcTYEq3pGdb4DMtSlG7a54nSexSBM9YNabJkHUBSpC0xZE2lKpEaAYy6CewK3CziwlFHgT0KDW_xl9jePPADXngBrUYnvERSwtsfHJGIddIalDnC2aLolIN9sE9d2_4IxWfMNQpY_2HW97xQ" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
+            <a id="devLinkBtn" href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
                 👨‍💻 View About Developer Kevin
             </a>
         </div>
@@ -352,7 +357,6 @@ async def chat_ui():
 
         function changeSystemLanguage() {
             const lang = document.getElementById('sysLang').value;
-            // Synchronize response language also if desired, or keep independent
             document.getElementById('respLang').value = lang;
             
             const t = translationsData[lang] || translationsData["English"];
@@ -438,7 +442,6 @@ async def chat_ui():
                 filePreviewHtml = `<div class="text-xs italic opacity-80">[Attached Image: ${fileInput.files[0].name}]</div>`;
             }
 
-            // Append User Message cleanly
             chatContainer.innerHTML += `
                 <div class="flex items-start gap-4 max-w-3xl mx-auto w-full justify-end">
                     <div class="bg-blue-600 text-white p-4 rounded-2xl leading-relaxed text-sm shadow-md max-w-[75%] ai-response-content flex flex-col gap-2">
@@ -452,7 +455,6 @@ async def chat_ui():
             inputField.value = '';
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            // Thinking / Rotating Messages with custom cycle as requested
             const thinkingId = 'thinking-' + Date.now();
             chatContainer.innerHTML += `
                 <div id="${thinkingId}" class="flex items-start gap-4 max-w-3xl mx-auto w-full">
@@ -463,20 +465,19 @@ async def chat_ui():
                 </div>`;
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            // Rotating animation sequence for image query or general query
             const isImgQuery = query.toLowerCase().includes('foto') || query.toLowerCase().includes('photo') || query.toLowerCase().includes('ishuri') || query.toLowerCase().includes('school');
             
             if (isImgQuery) {
                 const textEl = document.getElementById(`${thinkingId}-text`);
-                await wait(1000);
+                await wait(800);
                 textEl.innerText = "Your image is generating.......";
-                await wait(1000);
+                await wait(800);
                 textEl.innerText = "Please wait a moment......";
-                await wait(1000);
+                await wait(800);
                 textEl.innerText = "Be ready to see a Magic 🪄";
-                await wait(1000);
+                await wait(800);
             } else {
-                await wait(2500);
+                await wait(1200); // Faster response time as requested
             }
 
             try {
@@ -495,7 +496,6 @@ async def chat_ui():
                 
                 document.getElementById(thinkingId).remove();
 
-                // Clear file input indicator
                 fileInput.value = '';
                 document.getElementById('fileIndicator').classList.add('hidden');
 
@@ -508,7 +508,6 @@ async def chat_ui():
 
                 const contentId = 'content-' + Date.now();
 
-                // Append Assistant Message shell
                 chatContainer.innerHTML += `
                     <div class="flex items-start gap-4 max-w-3xl mx-auto w-full">
                         <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden p-1">
@@ -523,7 +522,7 @@ async def chat_ui():
                 chatContainer.scrollTop = chatContainer.scrollHeight;
 
                 const targetEl = document.getElementById(contentId);
-                await typeText(targetEl, data.response, 12);
+                await typeText(targetEl, data.response, 8); // Faster typing speed for quick response display
 
             } catch (err) {
                 document.getElementById(thinkingId).remove();
@@ -552,11 +551,14 @@ async def handle_chat(
     map_keywords = ["map", "google map", "ahoherereye", "location", "icyerekezo", "direction", "irebe"]
     is_map = any(kw in query_lower for kw in map_keywords)
 
+    link_keywords = ["link", "urubuga", "website", "e-mail", "email", "contact", "phone", "urubuga", "kanda", "ahantu"]
+    is_link_query = any(kw in query_lower for kw in link_keywords)
+
     file_analysis_note = ""
     if file:
         file_analysis_note = f"\n[User uploaded an image file named: {file.filename} for analysis.]"
 
-    system_prompt = BULINGA_INFO + file_analysis_note + f"\n\nCURRENT RESPONSE LANGUAGE REQUIREMENT:\n{response_lang}\nYou MUST strictly answer the user in this exact language ({response_lang}) and include cool emojis! 🚀"
+    system_prompt = BULINGA_INFO + file_analysis_note + f"\n\nCURRENT RESPONSE LANGUAGE REQUIREMENT:\n{response_lang}\nYou MUST strictly answer the user in this exact language ({response_lang}) and include cool emojis! 🚀 Remember to use **bold** text where appropriate and incorporate various colored text spans (<span style='color: ...'>) to make the text lively and colorful."
 
     try:
         completion = client.chat.completions.create(
@@ -586,14 +588,13 @@ async def handle_chat(
 
         if is_image_query and not is_gen_img:
             img_resp_dict = {
-                "Kinyarwanda": "Dore ifoto y'ikigo cyacu cyiza cya Bulinga Technical Secondary School nk'uko wabisabye! 📸✨",
-                "English": "Here is a photo of our wonderful Bulinga Technical Secondary School as you requested! 📸✨",
-                "Français": "Voici une photo de notre belle École Secondaire Technique de Bulinga comme demandé !",
-                "Kiswahili": "Hapa kuna picha ya shule yetu nzuri ya Bulinga Technical Secondary School kama ulivyoomba! 📸✨"
+                "Kinyarwanda": "Dore ifoto y'ikigo cyacu cyiza cya <span style='color: #51cf66;'>Bulinga Technical Secondary School</span> nk'uko wabisabye! 📸✨",
+                "English": "Here is a photo of our wonderful <span style='color: #51cf66;'>Bulinga Technical Secondary School</span> as you requested! 📸✨",
+                "Français": "Voici une photo de notre belle <span style='color: #51cf66;'>École Secondaire Technique de Bulinga</span> comme demandé !",
+                "Kiswahili": "Hapa kuna picha ya shule yetu nzuri ya <span style='color: #51cf66;'>Bulinga Technical Secondary School</span> kama ulivyoomba! 📸✨"
             }
             response_text = img_resp_dict.get(response_lang, img_resp_dict["English"])
             
-            # Guhitamo imwe muri za foto ziri muri repo kuva kuri 1 kugeza kuri 21 (jpg cyangwa jpeg)
             possible_images = []
             for i in range(1, 22):
                 for ext in ["jpeg", "jpg", "png"]:
@@ -601,25 +602,33 @@ async def handle_chat(
                     if os.path.exists(filename):
                         possible_images.append(f"/static/{filename}")
             
-            # KONGEREHO na btss.png cyangwa bulinga.png niba zihari
             if os.path.exists("btss.png"):
                 possible_images.append("/static/btss.png")
             if os.path.exists("bulinga.png"):
                 possible_images.append("/static/bulinga.png")
 
             if possible_images:
-                # Guhitamo imwe mu buryo bwa random cyangwa zose hamwe (aha duhitamo imwe cyangwa nyinshi uko ubishaka, dufashe imwe cyangwa ebyiri zishyushye)
                 chosen_img = random.choice(possible_images)
                 local_images.append(chosen_img)
 
         if is_map:
             map_dict = {
-                "Kinyarwanda": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> kugira ngo ubashe kureba icyerekezo cy\'ishuri ryacu! 🗺️📍✨',
-                "English": 'Do you want to see where the school is located? You can click here to open <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> to find the direction to our school! 🗺️📍✨',
-                "Français": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> pour trouver l\'itinéraire ! 🗺️📍✨',
-                "Kiswahili": 'Je, unataka kuona shule ilipo? Unaweza kubonyeza hapa kufungua <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> kupata mwelekeo wa shule yetu! 🗺️📍✨'
+                "Kinyarwanda": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">Google Map</a> kugira ngo ubashe kureba icyerekezo cy\'ishuri ryacu! 🗺️📍✨',
+                "English": 'Do you want to see where the school is located? You can click here to open <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">Google Map</a> to find the direction to our school! 🗺️📍✨',
+                "Français": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">Google Map</a> pour trouver l\'itinéraire ! 🗺️📍✨',
+                "Kiswahili": 'Je, unataka kuona shule ilipo? Unaweza kubonyeza hapa kufungua <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">Google Map</a> kupata mwelekeo wa shule yetu! 🗺️📍✨'
             }
             response_text = map_dict.get(response_lang, map_dict["English"])
+        
+        elif is_link_query and not is_map:
+            # Uburyo bwo gusubiza vuba (fast response) bwa link niba umukoresha asabye link cyangwa urubuga
+            link_dict = {
+                "Kinyarwanda": 'Dore <span style="color: #ffd43b; font-weight: bold;">Link</span> cyangwa urubuga rushinzwe <span style="color: #51cf66;">Developer Kevin</span> ushobora <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; font-weight: bold; text-decoration: underline;">gukanda hano</a> maze ugahita ujya kuri porunide ye cyangwa ukaba wakoresha email ye <span style="color: #ff6b6b;">therealhacks583@gmail.com</span>! 🔗🚀✨',
+                "English": 'Here is the <span style="color: #ffd43b; font-weight: bold;">Link</span> for <span style="color: #51cf66;">Developer Kevin</span>. You can <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; font-weight: bold; text-decoration: underline;">click here</a> to visit his portfolio or contact via email <span style="color: #ff6b6b;">therealhacks583@gmail.com</span>! 🔗🚀✨',
+                "Français": 'Voici le <span style="color: #ffd43b; font-weight: bold;">lien</span> de <span style="color: #51cf66;">Developer Kevin</span>. Vous pouvez <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; font-weight: bold; text-decoration: underline;">cliquer ici</a> pour y accéder ! 🔗🚀✨',
+                "Kiswahili": 'Hapa kuna <span style="color: #ffd43b; font-weight: bold;">Link</span> ya <span style="color: #51cf66;">Developer Kevin</span>. Unaweza <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; font-weight: bold; text-decoration: underline;">kubonyeza hapa</a> kutembelea tovuti yake! 🔗🚀✨'
+            }
+            response_text = link_dict.get(response_lang, link_dict["English"])
 
         return {
             "response": response_text, 
