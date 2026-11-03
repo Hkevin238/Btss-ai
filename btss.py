@@ -641,4 +641,4 @@ async def handle_chat(
             "local_images": local_images
         }
     except Exception as e:
-        return {"response": f"❌ Habaye ikibazo mu gusubiza: `{str(e)}`", "generated_img": None, "local_images": []}
+        return {"response": f"❌Mwihangane ,Habaye ikibazo mu gusubiza: `{str(e)}`", "generated_img": None, "local_images": []}
