@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from groq import Groq
 import urllib.parse
 import random
+from supabase import create_client, Client
 
 app = FastAPI(title="BULINGA TSS AI")
 
@@ -13,10 +14,15 @@ app = FastAPI(title="BULINGA TSS AI")
 app.mount("/static", StaticFiles(directory="."), name="static")
 
 # =========================================================
-# GROQ CLIENT & CONFIGURATION
+# GROQ & SUPABASE CONFIGURATION
 # =========================================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY or "YOUR_GROQ_API_KEY")
+
+# Guhuza na Supabase ukoresha Environment Variables
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL or "YOUR_SUPABASE_URL", SUPABASE_KEY or "YOUR_SUPABASE_KEY")
 
 # =========================================================
 # UI TRANSLATIONS DICTIONARY
@@ -168,7 +174,7 @@ Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Em
 """
 
 # =========================================================
-# CHAT & API ENDPOINT
+# CHAT & API ENDPOINTS
 # =========================================================
 @app.get("/", response_class=HTMLResponse)
 async def chat_ui():
@@ -440,7 +446,6 @@ async def chat_ui():
             const chatContainer = document.getElementById('chatContainer');
             const respLang = document.getElementById('respLang').value;
             const sysLang = document.getElementById('sysLang').value;
-            const t = translationsData[sysLang] || translationsData["English"];
             
             let filePreviewHtml = '';
             if (hasFile) {
@@ -482,7 +487,7 @@ async def chat_ui():
                 textEl.innerText = "Be ready to see a Magic 🪄";
                 await wait(800);
             } else {
-                await wait(120); // Faster response time as requested
+                await wait(120);
             }
 
             try {
@@ -527,7 +532,7 @@ async def chat_ui():
                 chatContainer.scrollTop = chatContainer.scrollHeight;
 
                 const targetEl = document.getElementById(contentId);
-                await typeText(targetEl, data.response, 8); // Faster typing speed for quick response display
+                await typeText(targetEl, data.response, 8);
 
             } catch (err) {
                 document.getElementById(thinkingId).remove();
@@ -540,105 +545,29 @@ async def chat_ui():
     """
 
 @app.post("/api/chat")
-async def handle_chat(
-    query: str = Form(...),
-    response_lang: str = Form("Kinyarwanda"),
-    file: UploadFile = File(None)
-):
-    query_lower = query.lower()
-    
-    image_keywords = ["foto", "photo", "ishuri", "school", "ifoto", "icyapa", "image", "logo", "akarango", "btss"]
-    is_image_query = any(kw in query_lower for kw in image_keywords)
-    
-    gen_img_keywords = ["generate image", "kora ifoto", "shushanya", "draw", "create image", "ushushanye", "rekama ifoto", "image ya"]
-    is_gen_img = any(kw in query_lower for kw in gen_img_keywords)
-    
-    map_keywords = ["map", "google map", "ahoherereye", "location", "icyerekezo", "direction", "irebe"]
-    is_map = any(kw in query_lower for kw in map_keywords)
-
-    link_keywords = ["link", "urubuga", "website", "e-mail", "email", "contact", "phone", "urubuga", "kanda", "ahantu"]
-    is_link_query = any(kw in query_lower for kw in link_keywords)
-
-    file_analysis_note = ""
-    if file:
-        file_analysis_note = f"\n[User uploaded an image file named: {file.filename} for analysis.]"
-
-    system_prompt = BULINGA_INFO + file_analysis_note + f"\n\nCURRENT RESPONSE LANGUAGE REQUIREMENT:\n{response_lang}\nYou MUST strictly answer the user in this exact language ({response_lang}) and include cool emojis! 🚀 Remember to use **bold** text where appropriate and incorporate various colored text spans (<span style='color: ...'>) to make the text lively and colorful."
-
+async def chat_endpoint(query: str = Form(...), response_lang: str = Form("Kinyarwanda"), file: UploadFile = File(None)):
     try:
+        # Hano ushobora gukoresha supabase nka query cyangwa insert niba ubikeneye:
+        # urugero: supabase.table("chat_logs").insert({"query": query}).execute()
+
         completion = client.chat.completions.create(
-            model="openai/gpt-oss-20b",
+            model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": query}
+                {"role": "system", "content": BULINGA_INFO},
+                {"role": "user", "content": f"Respond in {response_lang}. User query: {query}"}
             ],
-            temperature=0.7,
-            max_tokens=1024
+            temperature=0.7
         )
-        response_text = completion.choices[0].message.content
-        
-        generated_img_url = None
-        local_images = []
+        ai_response = completion.choices[0].message.content
 
-        if is_gen_img:
-            resp_dict = {
-                "Kinyarwanda": "Dore ifoto wasabye ko nkukorera cyangwa ko nkushushanyiriza! 🎨✨",
-                "English": "Here is the generated image you asked me to create! 🎨✨",
-                "Français": "Voici l'image générée que vous m'avez demandé de créer ! 🎨✨",
-                "Kiswahili": "Hapa kuna picha uliyoniomba nitengeneze! 🎨✨"
-            }
-            response_text = resp_dict.get(response_lang, resp_dict["English"])
-            encoded_prompt = urllib.parse.quote(query)
-            generated_img_url = f"https://pollinations.ai/p/{encoded_prompt}?width=1024&height=1024&seed=42&nologo=true"
-
-        if is_image_query and not is_gen_img:
-            img_resp_dict = {
-                "Kinyarwanda": "Dore ifoto y'ikigo cyacu cyiza cya <span style='color: #51cf66;'>Bulinga Technical Secondary School</span> nk'uko wabisabye! 📸✨",
-                "English": "Here is a photo of our wonderful <span style='color: #51cf66;'>Bulinga Technical Secondary School</span> as you requested! 📸✨",
-                "Français": "Voici une photo de notre belle <span style='color: #51cf66;'>École Secondaire Technique de Bulinga</span> comme demandé !",
-                "Kiswahili": "Hapa kuna picha ya shule yetu nzuri ya <span style='color: #51cf66;'>Bulinga Technical Secondary School</span> kama ulivyoomba! 📸✨"
-            }
-            response_text = img_resp_dict.get(response_lang, img_resp_dict["English"])
-            
-            possible_images = []
-            for i in range(1, 22):
-                for ext in ["jpeg", "jpg", "png"]:
-                    filename = f"{i}.{ext}"
-                    if os.path.exists(filename):
-                        possible_images.append(f"/static/{filename}")
-            
-            if os.path.exists("btss.png"):
-                possible_images.append("/static/btss.png")
-            if os.path.exists("bulinga.png"):
-                possible_images.append("/static/bulinga.png")
-
-            if possible_images:
-                chosen_img = random.choice(possible_images)
-                local_images.append(chosen_img)
-
-        if is_map:
-            map_dict = {
-                "Kinyarwanda": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">Google Map</a> kugira ngo ubashe kureba icyerekezo cy\'ishuri ryacu! 🗺️📍✨',
-                "English": 'Do you want to see where the school is located? You can click here to open <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">Google Map</a> to find the direction to our school! 🗺️📍✨',
-                "Français": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">Google Map</a> pour trouver l\'itinéraire ! 🗺️📍✨',
-                "Kiswahili": 'Je, unataka kuona shule ilipo? Unaweza kubonyeza hapa kufungua <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #ff6b6b; font-weight: bold; text-decoration: underline;">Google Map</a> kupata mwelekeo wa shule yetu! 🗺️📍✨'
-            }
-            response_text = map_dict.get(response_lang, map_dict["English"])
-        
-        elif is_link_query and not is_map:
-            # Uburyo bwo gusubiza vuba (fast response) bwa link niba umukoresha asabye link cyangwa urubuga
-            link_dict = {
-                "Kinyarwanda": 'Dore <span style="color: #ffd43b; font-weight: bold;">Link</span> cyangwa urubuga rushinzwe <span style="color: #51cf66;">Developer Kevin</span> ushobora <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; font-weight: bold; text-decoration: underline;">gukanda hano</a> maze ugahita ujya kuri porunide ye cyangwa ukaba wakoresha email ye <span style="color: #ff6b6b;">therealhacks583@gmail.com</span>! 🔗🚀✨',
-                "English": 'Here is the <span style="color: #ffd43b; font-weight: bold;">Link</span> for <span style="color: #51cf66;">Developer Kevin</span>. You can <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; font-weight: bold; text-decoration: underline;">click here</a> to visit his portfolio or contact via email <span style="color: #ff6b6b;">therealhacks583@gmail.com</span>! 🔗🚀✨',
-                "Français": 'Voici le <span style="color: #ffd43b; font-weight: bold;">lien</span> de <span style="color: #51cf66;">Developer Kevin</span>. Vous pouvez <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; font-weight: bold; text-decoration: underline;">cliquer ici</a> pour y accéder ! 🔗🚀✨',
-                "Kiswahili": 'Hapa kuna <span style="color: #ffd43b; font-weight: bold;">Link</span> ya <span style="color: #51cf66;">Developer Kevin</span>. Unaweza <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; font-weight: bold; text-decoration: underline;">kubonyeza hapa</a> kutembelea tovuti yake! 🔗🚀✨'
-            }
-            response_text = link_dict.get(response_lang, link_dict["English"])
-
-        return {
-            "response": response_text, 
-            "generated_img": generated_img_url,
-            "local_images": local_images
-        }
+        return JSONResponse({
+            "response": ai_response,
+            "local_images": [],
+            "generated_img": None
+        })
     except Exception as e:
-        return {"response": f"❌Mwihangane ,Habaye ikibazo mu gusubiza: `{str(e)}`", "generated_img": None, "local_images": []}
+        return JSONResponse({
+            "response": f"Habaye ikibazo: {str(e)} ⚠️",
+            "local_images": [],
+            "generated_img": None
+        }, status_code=500)
