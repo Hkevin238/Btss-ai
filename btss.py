@@ -1,7 +1,4 @@
 import os
-import json
-import urllib.request
-import urllib.error
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi import HTTPException
@@ -899,35 +896,10 @@ async def chat_ui():
             });
         }
 
-        async function typeText(element, text, speed = 22) {
-            // Type one character at a time, with natural pauses like human typing.
-            const fullText = String(text || '');
+        async function typeText(element, text, speed = 0) {
+            // Render structured Markdown like ChatGPT/Gemini instead of showing raw **markers**.
+            renderAIResponse(element, text);
             const chat = document.getElementById('chatContainer');
-
-            if (!fullText) {
-                renderAIResponse(element, '');
-                return;
-            }
-
-            const requestedSpeed = Number(speed) || 35;
-            const characterDelay = Math.max(25, Math.min(requestedSpeed, 55));
-
-            for (let position = 1; position <= fullText.length; position++) {
-                renderAIResponse(element, fullText.slice(0, position));
-                chat.scrollTop = chat.scrollHeight;
-
-                const currentChar = fullText[position - 1];
-                let delay = characterDelay + Math.random() * 18;
-
-                if (/[.!?]/.test(currentChar)) delay += 350;
-                else if (/[,;:]/.test(currentChar)) delay += 180;
-                else if (currentChar === '\n') delay += 220;
-                else if (currentChar === ' ') delay += 12;
-
-                await wait(delay);
-            }
-
-            renderAIResponse(element, fullText);
             chat.scrollTop = chat.scrollHeight;
         }
 
@@ -1084,102 +1056,6 @@ async def chat_ui():
 </html>
     """
 
-
-# =========================================================
-# FIND BTSS PHOTOS IN THE PUBLIC GITHUB REPOSITORY
-# =========================================================
-BTSS_REPO_TREE_URL = (
-    "https://api.github.com/repos/Hkevin238/Btss-ai/git/trees/main?recursive=1"
-)
-BTSS_RAW_BASE_URL = "https://raw.githubusercontent.com/Hkevin238/Btss-ai/main/"
-BTSS_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".avif")
-_BTSS_IMAGE_CACHE = {"expires": 0, "paths": []}
-
-
-def user_requested_btss_image(query: str) -> bool:
-    """Return True only when the user appears to be asking to see an image."""
-    text = (query or "").lower()
-    image_terms = (
-        "ifoto", "amafoto", "foto", "amashusho", "ishusho",
-        "photo", "photos", "picture", "pictures", "image", "images",
-        "show me", "send me", "display", "nyereka", "mwereke",
-        "ndakenera kubona", "ndashaka kubona", "mpa ifoto",
-        "ohereza ifoto", "shaka ifoto"
-    )
-    return any(term in text for term in image_terms)
-
-
-def get_btss_repository_images():
-    """Get image paths recursively from the Btss-ai main branch."""
-    now = datetime.now(timezone.utc).timestamp()
-    if _BTSS_IMAGE_CACHE["paths"] and now < _BTSS_IMAGE_CACHE["expires"]:
-        return _BTSS_IMAGE_CACHE["paths"]
-
-    request = urllib.request.Request(
-        BTSS_REPO_TREE_URL,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "BULINGA-TSS-AI"
-        }
-    )
-    with urllib.request.urlopen(request, timeout=15) as response:
-        tree_data = json.loads(response.read().decode("utf-8"))
-
-    image_paths = [
-        item["path"]
-        for item in tree_data.get("tree", [])
-        if item.get("type") == "blob"
-        and item.get("path", "").lower().endswith(BTSS_IMAGE_EXTENSIONS)
-    ]
-
-    _BTSS_IMAGE_CACHE["paths"] = image_paths
-    _BTSS_IMAGE_CACHE["expires"] = now + 600
-    return image_paths
-
-
-def choose_btss_repository_image(query: str):
-    """Ask the AI to choose the best matching image from the repository."""
-    image_paths = get_btss_repository_images()
-    if not image_paths:
-        return []
-
-    candidates = image_paths[:250]
-    candidate_text = "\n".join(candidates)
-
-    selection = client.chat.completions.create(
-        model="openai/gpt-oss-20b",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You select relevant image files from the BULINGA TSS AI "
-                    "GitHub repository. Choose exactly one path from the supplied "
-                    "list that best matches the user's image request. Return only "
-                    "the exact file path, with no explanation. If none is relevant, "
-                    "return NONE."
-                )
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"User's image request: {query}\n\n"
-                    f"Available image paths:\n{candidate_text}"
-                )
-            }
-        ],
-        temperature=0
-    )
-
-    selected_path = (selection.choices[0].message.content or "").strip()
-    selected_path = selected_path.strip("`'\" ").strip()
-
-    if selected_path not in candidates:
-        return []
-
-    encoded_path = urllib.parse.quote(selected_path, safe="/")
-    return [BTSS_RAW_BASE_URL + encoded_path]
-
-
 @app.post("/api/chat")
 async def chat_endpoint(
     query: str = Form(...),
@@ -1197,16 +1073,9 @@ async def chat_endpoint(
         )
         ai_response = completion.choices[0].message.content
 
-        local_images = []
-        if user_requested_btss_image(query):
-            try:
-                local_images = choose_btss_repository_image(query)
-            except Exception:
-                local_images = []
-
         return JSONResponse({
             "response": ai_response,
-            "local_images": local_images,
+            "local_images": [],
             "generated_img": None
         })
     except Exception as e:
