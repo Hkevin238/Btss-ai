@@ -239,8 +239,8 @@ async def chat_ui():
 <body class="bg-gray-50 dark:bg-darkBg text-gray-900 dark:text-gray-100 h-screen flex overflow-hidden app-bg">
 
     <!-- AUTHENTICATION SCREEN -->
-    <section id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
-        <div class="w-full max-w-md rounded-3xl border border-white/10 bg-white dark:bg-[#18191a] p-7 shadow-2xl">
+    <section id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-slate-950/90 backdrop-blur-md">
+        <div class="w-full max-w-md my-auto rounded-3xl border border-white/10 bg-white dark:bg-[#18191a] p-7 shadow-2xl">
             <div class="text-center mb-6">
                 <img src="/static/btss.png" alt="BULINGA TSS" class="w-16 h-16 object-contain mx-auto mb-3">
                 <h1 class="text-2xl font-extrabold">BULINGA TSS AI 🏫</h1>
@@ -281,7 +281,7 @@ async def chat_ui():
                 Continue without Register ⚡
             </button>
             <p id="authMessage" role="status" class="text-sm text-center mt-4 text-blue-500"></p>
-            <p class="text-[11px] text-center text-gray-400 mt-4">Your account is managed securely by Supabase Authentication.</p>
+            <p class="text-[11px] text-center text-gray-400 mt-4">Your account is Secured &amp; Private Always .</p>
         </div>
     </section>
 
@@ -600,7 +600,20 @@ async def chat_ui():
             }
         }
 
+        function makePlainUrlsClickable(value) {
+            const urlPattern = /\bhttps?:\/\/[^\s<]+/gi;
+            return String(value).split(/(<[^>]+>)/g).map(part => {
+                if (part.startsWith('<') && part.endsWith('>')) return part;
+                return part.replace(urlPattern, url => {
+                    const cleanUrl = url.replace(/[),.!?;:]+$/, '');
+                    const trailing = url.slice(cleanUrl.length);
+                    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color:#4dabf7;text-decoration:underline;word-break:break-word;">${cleanUrl}</a>${trailing}`;
+                });
+            }).join('');
+        }
+
         async function typeText(element, text, speed = 15) {
+            text = makePlainUrlsClickable(text);
             element.innerHTML = "";
             let length = text.length;
             let i = 0;
@@ -780,7 +793,7 @@ async def chat_endpoint(
         })
     except Exception as e:
         return JSONResponse({
-            "response": f"MUBE MWIHANGANYE PROGRAM IRIMO KUVUGURURWA  !!!: {str(e)} ⚠️",
+            "response": f"Habaye ikibazo: {str(e)} ⚠️",
             "local_images": [],
             "generated_img": None
         }, status_code=500)
