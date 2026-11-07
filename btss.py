@@ -39,7 +39,7 @@ SESSION_COOKIE_NAME = "bulinga_session"
 
 
 def get_auth_db():
-    connection = sqlite3.connect(AUTH_DB_PATH)
+    connection = sqlite3.connect(AUTH_DB_PATH, timeout=30)
     connection.row_factory = sqlite3.Row
     return connection
 
@@ -283,6 +283,11 @@ async def signup(payload: AuthPayload, request: Request):
     if len(payload.password) < 6:
         raise HTTPException(status_code=400, detail="Password igomba kugira nibura inyuguti 6.")
 
+    if not email or "@" not in email or "." not in email.rsplit("@", 1)[-1]:
+        raise HTTPException(status_code=400, detail="Andika email nyayo.")
+    if not full_name:
+        raise HTTPException(status_code=400, detail="Andika amazina yawe.")
+
     salt_hex, password_hash = hash_password(payload.password)
     try:
         with get_auth_db() as db:
@@ -294,10 +299,15 @@ async def signup(payload: AuthPayload, request: Request):
                 datetime.now(timezone.utc).isoformat()
             ))
             user_id = cursor.lastrowid
+        return create_user_session(user_id, request)
     except sqlite3.IntegrityError:
-        raise HTTPException(status_code=409, detail="Iyi email isanzwe ifite konti. Injira aho gufungura indi.")
-
-    return create_user_session(user_id, request)
+        raise HTTPException(status_code=409, detail="Iyi email isanzwe ifite konti. Hitamo Login.")
+    except sqlite3.Error as exc:
+        print(f"AUTH DATABASE SIGNUP ERROR: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail="Server ntiyabashije kubika konti. Reba ko AUTH_DB_PATH yandikwamo na server."
+        )
 
 
 @app.post("/api/auth/login")
@@ -316,7 +326,11 @@ async def login(payload: AuthPayload, request: Request):
     if not hmac.compare_digest(submitted_hash, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Email cyangwa password si byo.")
 
-    return create_user_session(user["id"], request)
+    try:
+        return create_user_session(user["id"], request)
+    except sqlite3.Error as exc:
+        print(f"AUTH DATABASE LOGIN ERROR: {exc}")
+        raise HTTPException(status_code=500, detail="Server ntiyabashije gukora session. Ongera ugerageze.")
 
 
 @app.get("/api/auth/me")
@@ -585,6 +599,7 @@ async def chat_ui():
             currentAuthMode = mode;
             const signup = mode === 'signup';
             document.getElementById('nameField').classList.toggle('hidden', !signup);
+            document.getElementById('authName').required = signup;
             document.getElementById('authPassword').autocomplete = signup ? 'new-password' : 'current-password';
             document.getElementById('authSubmitBtn').textContent = signup ? 'Create Account 🚀' : 'Login 🔓';
             document.getElementById('loginTab').className = signup
@@ -598,32 +613,87 @@ async def chat_ui():
 
         async function submitEmailAuth(event) {
             event.preventDefault();
+
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value;
             const fullName = document.getElementById('authName').value.trim();
             const button = document.getElementById('authSubmitBtn');
+
+            if (!email || !password) {
+                showAuthMessage('Andika email na password mbere yo gukomeza.', true);
+                return;
+            }
+            if (currentAuthMode === 'signup' && !fullName) {
+                showAuthMessage('Andika amazina yawe mbere yo gufungura konti.', true);
+                document.getElementById('authName').focus();
+                return;
+            }
+            if (password.length < 6) {
+                showAuthMessage('Password igomba kugira nibura inyuguti 6.', true);
+                return;
+            }
+
             button.disabled = true;
             button.textContent = 'Please wait...';
+            showAuthMessage('Turimo kugenzura amakuru yawe...');
 
             try {
-                const endpoint = currentAuthMode === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+                const endpoint = currentAuthMode === 'signup'
+                    ? '/api/auth/signup'
+                    : '/api/auth/login';
+
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ email, password, full_name: fullName })
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    credentials: 'include',
+                    cache: 'no-store',
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        full_name: fullName
+                    })
                 });
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.detail || 'Authentication failed.');
 
-                currentUser = { email, full_name: fullName || email.split('@')[0] };
+                const rawBody = await response.text();
+                let data = {};
+                try {
+                    data = rawBody ? JSON.parse(rawBody) : {};
+                } catch (_) {
+                    throw new Error('Server yagaruye igisubizo kitumvikana. Reba logs za hosting.');
+                }
+
+                if (!response.ok) {
+                    const detail = data.detail || data.message || ('HTTP ' + response.status);
+                    throw new Error(detail);
+                }
+
+                // Confirm the session cookie was saved before opening the AI chat.
+                const check = await fetch('/api/auth/me', {
+                    method: 'GET',
+                    credentials: 'include',
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const session = await check.json();
+
+                if (!check.ok || !session.authenticated || !session.user) {
+                    throw new Error('Konti yako yakozwe, ariko session ntiyabitswe. Reba cookie/HTTPS settings za hosting.');
+                }
+
+                currentUser = session.user;
                 guestMode = false;
-                enterChat(currentUser.full_name);
+                enterChat(currentUser.full_name || currentUser.email);
             } catch (error) {
-                showAuthMessage(error.message || 'Authentication failed.', true);
+                console.error('Authentication error:', error);
+                showAuthMessage(
+                    error.message || 'Ntibyashobotse kwinjira. Reba internet cyangwa server yawe.',
+                    true
+                );
             } finally {
                 button.disabled = false;
-                button.textContent = currentAuthMode === 'signup' ? 'Create Account 🚀' : 'Login 🔓';
+                button.textContent = currentAuthMode === 'signup'
+                    ? 'Create Account 🚀'
+                    : 'Login 🔓';
             }
         }
 
