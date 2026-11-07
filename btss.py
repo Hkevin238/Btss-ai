@@ -1,4 +1,7 @@
 import os
+import json
+import urllib.request
+import urllib.error
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi import HTTPException
@@ -531,9 +534,9 @@ async def chat_ui():
                 🗑️ Clear Chat History
             </button>
 
-            <!-- View About Developer Button/Link -->
+            <!-- View About Developer Kevin Button/Link -->
             <a id="devLinkBtn" href="https://lovable.dev/projects/2d0e0900-16e8-4e8c-90fe-b2df1c0999c2" target="_blank" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
-                👨‍💻 View About Developer
+                👨‍💻 View About Developer Kevin
             </a>
         </div>
 
@@ -748,11 +751,11 @@ async def chat_ui():
                 "lbl_sys": "🌐 Ururimi rwa System",
                 "lbl_resp": "💬 Ururimi rw'Igisubizo",
                 "clear_history": "🗑️ Hanagura Amateka y'Ibiganiro",
-                "dev_link": "👨‍💻 Reba kuri Developer",
+                "dev_link": "👨‍💻 Reba kuri Developer Kevin",
                 "logout": "Sohoka",
                 "main_title": "BULINGA AI Assistant 🚀",
                 "placeholder": "Baza icyo ushaka cyose cyangwa wandike 'Amakuru ya Bulinga'...",
-                "footer": "Dev Kevin • Bulinga TSS AI",
+                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking....... 💭"
             },
             "English": {
@@ -760,11 +763,11 @@ async def chat_ui():
                 "lbl_sys": "🌐 System Language",
                 "lbl_resp": "💬 Response Language",
                 "clear_history": "🗑️ Clear Chat History",
-                "dev_link": "👨‍💻 View About Developer",
+                "dev_link": "👨‍💻 View About Developer Kevin",
                 "logout": "Logout",
                 "main_title": "BULINGA AI Assistant 🚀",
                 "placeholder": "Ask anything or type like 'What about Bulinga info...'",
-                "footer": "Dev Kevin • Bulinga TSS AI",
+                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             },
             "Français": {
@@ -772,11 +775,11 @@ async def chat_ui():
                 "lbl_sys": "🌐 Langue du Système",
                 "lbl_resp": "💬 Langue de Réponse",
                 "clear_history": "🗑️ Effacer l'historique",
-                "dev_link": "👨‍💻 Voir À propos de Developer",
+                "dev_link": "👨‍💻 Voir À propos de Developer Kevin",
                 "logout": "Se déconnecter",
                 "main_title": "Assistant IA BULINGA 🚀",
                 "placeholder": "Posez une question ou tapez 'Amakuru ya Bulinga'...",
-                "footer": "Dev Kevin • Bulinga TSS AI",
+                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             },
             "Kiswahili": {
@@ -788,7 +791,7 @@ async def chat_ui():
                 "logout": "Toka",
                 "main_title": "Msaidizi wa AI wa BULINGA 🚀",
                 "placeholder": "Uliza chochote auandike 'Amakuru ya Bulinga'...",
-                "footer": "Dev Kevin • Bulinga TSS AI",
+                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             }
         };
@@ -1011,9 +1014,9 @@ async def chat_ui():
                 await wait(800);
                 textEl.innerText = "Generating your image.......";
                 await wait(800);
-                textEl.innerText = "Please wait a moment😍......";
+                textEl.innerText = "Please wait a moment......";
                 await wait(800);
-                textEl.innerText = "Be ready to see a Magic ✨";
+                textEl.innerText = "Be ready to see a Magic 🪄";
                 await wait(800);
             } else {
                 await wait(120);
@@ -1081,6 +1084,102 @@ async def chat_ui():
 </html>
     """
 
+
+# =========================================================
+# FIND BTSS PHOTOS IN THE PUBLIC GITHUB REPOSITORY
+# =========================================================
+BTSS_REPO_TREE_URL = (
+    "https://api.github.com/repos/Hkevin238/Btss-ai/git/trees/main?recursive=1"
+)
+BTSS_RAW_BASE_URL = "https://raw.githubusercontent.com/Hkevin238/Btss-ai/main/"
+BTSS_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".avif")
+_BTSS_IMAGE_CACHE = {"expires": 0, "paths": []}
+
+
+def user_requested_btss_image(query: str) -> bool:
+    """Return True only when the user appears to be asking to see an image."""
+    text = (query or "").lower()
+    image_terms = (
+        "ifoto", "amafoto", "foto", "amashusho", "ishusho",
+        "photo", "photos", "picture", "pictures", "image", "images",
+        "show me", "send me", "display", "nyereka", "mwereke",
+        "ndakenera kubona", "ndashaka kubona", "mpa ifoto",
+        "ohereza ifoto", "shaka ifoto"
+    )
+    return any(term in text for term in image_terms)
+
+
+def get_btss_repository_images():
+    """Get image paths recursively from the Btss-ai main branch."""
+    now = datetime.now(timezone.utc).timestamp()
+    if _BTSS_IMAGE_CACHE["paths"] and now < _BTSS_IMAGE_CACHE["expires"]:
+        return _BTSS_IMAGE_CACHE["paths"]
+
+    request = urllib.request.Request(
+        BTSS_REPO_TREE_URL,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "BULINGA-TSS-AI"
+        }
+    )
+    with urllib.request.urlopen(request, timeout=15) as response:
+        tree_data = json.loads(response.read().decode("utf-8"))
+
+    image_paths = [
+        item["path"]
+        for item in tree_data.get("tree", [])
+        if item.get("type") == "blob"
+        and item.get("path", "").lower().endswith(BTSS_IMAGE_EXTENSIONS)
+    ]
+
+    _BTSS_IMAGE_CACHE["paths"] = image_paths
+    _BTSS_IMAGE_CACHE["expires"] = now + 600
+    return image_paths
+
+
+def choose_btss_repository_image(query: str):
+    """Ask the AI to choose the best matching image from the repository."""
+    image_paths = get_btss_repository_images()
+    if not image_paths:
+        return []
+
+    candidates = image_paths[:250]
+    candidate_text = "\n".join(candidates)
+
+    selection = client.chat.completions.create(
+        model="openai/gpt-oss-20b",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You select relevant image files from the BULINGA TSS AI "
+                    "GitHub repository. Choose exactly one path from the supplied "
+                    "list that best matches the user's image request. Return only "
+                    "the exact file path, with no explanation. If none is relevant, "
+                    "return NONE."
+                )
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"User's image request: {query}\n\n"
+                    f"Available image paths:\n{candidate_text}"
+                )
+            }
+        ],
+        temperature=0
+    )
+
+    selected_path = (selection.choices[0].message.content or "").strip()
+    selected_path = selected_path.strip("`'\" ").strip()
+
+    if selected_path not in candidates:
+        return []
+
+    encoded_path = urllib.parse.quote(selected_path, safe="/")
+    return [BTSS_RAW_BASE_URL + encoded_path]
+
+
 @app.post("/api/chat")
 async def chat_endpoint(
     query: str = Form(...),
@@ -1098,9 +1197,16 @@ async def chat_endpoint(
         )
         ai_response = completion.choices[0].message.content
 
+        local_images = []
+        if user_requested_btss_image(query):
+            try:
+                local_images = choose_btss_repository_image(query)
+            except Exception:
+                local_images = []
+
         return JSONResponse({
             "response": ai_response,
-            "local_images": [],
+            "local_images": local_images,
             "generated_img": None
         })
     except Exception as e:
