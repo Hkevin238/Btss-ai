@@ -780,7 +780,7 @@ async def chat_endpoint(
         })
     except Exception as e:
         return JSONResponse({
-            "response": f"Habaye ikibazo: {str(e)} ⚠️",
+            "response": f"MUBE MWIHANGANYE PROGRAM IRIMO KUVUGURURWA  !!!: {str(e)} ⚠️",
             "local_images": [],
             "generated_img": None
         }, status_code=500)
