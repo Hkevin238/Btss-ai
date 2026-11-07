@@ -198,6 +198,8 @@ async def chat_ui():
     <title>BULINGA TSS AI</title>
     <link rel="icon" type="image/png" href="/static/btss.png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -230,10 +232,39 @@ async def chat_ui():
         }
         
         .ai-response-content {
-            white-space: pre-wrap;
-            word-break: break-word;
-            line-height: 1.6;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            line-height: 1.75;
+            font-size: 0.94rem;
         }
+        .ai-response-content p { margin: 0.55rem 0; }
+        .ai-response-content h1, .ai-response-content h2, .ai-response-content h3 {
+            font-weight: 750; line-height: 1.3; margin: 1rem 0 0.45rem;
+        }
+        .ai-response-content h1 { font-size: 1.35rem; }
+        .ai-response-content h2 { font-size: 1.18rem; }
+        .ai-response-content h3 { font-size: 1.05rem; }
+        .ai-response-content ul, .ai-response-content ol { margin: 0.55rem 0; padding-left: 1.5rem; }
+        .ai-response-content ul { list-style: disc; }
+        .ai-response-content ol { list-style: decimal; }
+        .ai-response-content li { margin: 0.25rem 0; }
+        .ai-response-content blockquote { border-left: 3px solid #4dabf7; padding-left: 0.85rem; opacity: .9; margin: .7rem 0; }
+        .ai-response-content pre { overflow-x: auto; padding: 1rem; border-radius: .75rem; background: rgba(15,23,42,.95); color: #e2e8f0; margin: .7rem 0; }
+        .ai-response-content code { font-family: Consolas, monospace; background: rgba(100,116,139,.16); padding: .12rem .3rem; border-radius: .3rem; }
+        .ai-response-content pre code { background: transparent; padding: 0; }
+        .ai-response-content table { width: 100%; border-collapse: collapse; margin: .75rem 0; display: block; overflow-x: auto; }
+        .ai-response-content th, .ai-response-content td { border: 1px solid rgba(148,163,184,.35); padding: .5rem .65rem; text-align: left; }
+        .ai-response-content th { font-weight: 700; background: rgba(148,163,184,.14); }
+        .ai-response-content a, .ai-response-content .smart-link { color: #3b9cff !important; text-decoration: underline; text-underline-offset: 3px; }
+        .ai-response-content hr { border: 0; border-top: 1px solid rgba(148,163,184,.4); margin: 1rem 0; }
+        body.theme-light { background: #f8fafc !important; color: #172033 !important; }
+        body.theme-light #sidebar { background: rgba(255,255,255,.97) !important; color: #172033 !important; }
+        body.theme-light #chatContainer .ai-bubble { background: rgba(255,255,255,.96) !important; color: #172033 !important; }
+        body.theme-light #mainHeader { background: rgba(255,255,255,.88) !important; color: #172033 !important; }
+        body.theme-dark { background: #111827 !important; color: #f8fafc !important; }
+        body.theme-dark #sidebar { background: rgba(24,25,26,.98) !important; }
+        body.theme-dark #chatContainer .ai-bubble { background: rgba(45,48,54,.97) !important; color: #f8fafc !important; }
+        body.theme-custom { background-color: #121212; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-darkBg text-gray-900 dark:text-gray-100 h-screen flex overflow-hidden app-bg">
@@ -318,6 +349,15 @@ async def chat_ui():
                 </div>
             </div>
 
+            <div>
+                <label for="themeMode" class="text-xs text-gray-400 font-semibold">🎨 Appearance</label>
+                <select id="themeMode" onchange="changeThemeMode(this.value)" class="w-full mt-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                    <option value="custom">🖼️ Custom</option>
+                    <option value="dark">🌙 Dark</option>
+                    <option value="light">☀️ Light</option>
+                </select>
+            </div>
+
             <hr class="border-gray-200 dark:border-gray-700">
 
             <button id="clearHistoryBtn" onclick="clearHistory()" class="w-full py-2 px-3 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 text-sm font-medium transition">
@@ -339,7 +379,7 @@ async def chat_ui():
     <!-- MAIN CHAT AREA -->
     <main class="flex-1 flex flex-col h-full relative bg-transparent">
         <!-- Top Navbar -->
-        <header class="h-14 border-b border-gray-200/20 dark:border-gray-800/50 flex items-center px-4 justify-between bg-white/40 dark:bg-[#18191a]/60 backdrop-blur-md">
+        <header id="mainHeader" class="h-14 border-b border-gray-200/20 dark:border-gray-800/50 flex items-center px-4 justify-between bg-white/40 dark:bg-[#18191a]/60 backdrop-blur-md">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-800/50">☰</button>
                 <span id="mainHeaderTitle" class="font-bold text-base">BULINGA AI Assistant 🚀</span>
@@ -600,41 +640,110 @@ async def chat_ui():
             }
         }
 
-        function makePlainUrlsClickable(value) {
-            const urlPattern = /\bhttps?:\/\/[^\s<]+/gi;
-            return String(value).split(/(<[^>]+>)/g).map(part => {
-                if (part.startsWith('<') && part.endsWith('>')) return part;
-                return part.replace(urlPattern, url => {
-                    const cleanUrl = url.replace(/[),.!?;:]+$/, '');
-                    const trailing = url.slice(cleanUrl.length);
-                    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color:#4dabf7;text-decoration:underline;word-break:break-word;">${cleanUrl}</a>${trailing}`;
-                });
-            }).join('');
+        function linkifyResponse(root) {
+            const pattern = /(https?:\/\/[^\s<]+|www\.[^\s<]+|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|\+?\d[\d\s().-]{7,}\d)/gi;
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+            const nodes = [];
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                if (node.parentElement && !node.parentElement.closest('a, code, pre, script, style')) {
+                    if (pattern.test(node.nodeValue)) nodes.push(node);
+                    pattern.lastIndex = 0;
+                }
+            }
+
+            nodes.forEach(node => {
+                const value = node.nodeValue;
+                const fragment = document.createDocumentFragment();
+                let last = 0;
+                pattern.lastIndex = 0;
+                let match;
+                while ((match = pattern.exec(value)) !== null) {
+                    fragment.appendChild(document.createTextNode(value.slice(last, match.index)));
+                    let visible = match[0].replace(/[),.!?;:]+$/, '');
+                    const trailing = match[0].slice(visible.length);
+                    let href = '';
+                    if (/^[\w.+-]+@[\w.-]+\.[A-Z]{2,}$/i.test(visible)) href = 'mailto:' + visible;
+                    else if (/^\+?\d[\d\s().-]{7,}\d$/.test(visible)) href = 'tel:' + visible.replace(/[^\d+]/g, '');
+                    else href = /^https?:\/\//i.test(visible) ? visible : 'https://' + visible;
+
+                    const a = document.createElement('a');
+                    a.href = href;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    a.className = 'smart-link';
+                    a.textContent = visible;
+                    fragment.appendChild(a);
+                    if (trailing) fragment.appendChild(document.createTextNode(trailing));
+                    last = match.index + match[0].length;
+                }
+                fragment.appendChild(document.createTextNode(value.slice(last)));
+                node.parentNode.replaceChild(fragment, node);
+            });
         }
 
-        async function typeText(element, text, speed = 15) {
-            text = makePlainUrlsClickable(text);
-            element.innerHTML = "";
-            let length = text.length;
-            let i = 0;
-            while (i < length) {
-                if (text[i] === '<') {
-                    let closeIdx = text.indexOf('>', i);
-                    if (closeIdx !== -1) {
-                        element.innerHTML += text.substring(i, closeIdx + 1);
-                        i = closeIdx + 1;
-                    } else {
-                        element.innerHTML += text[i];
-                        i++;
-                    }
-                } else {
-                    element.innerHTML += text[i];
-                    i++;
-                }
-                document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
-                await wait(speed);
+        function renderAIResponse(element, responseText) {
+            const raw = String(responseText || '');
+            let html;
+            if (window.marked && typeof window.marked.parse === 'function') {
+                html = window.marked.parse(raw, { gfm: true, breaks: true });
+            } else {
+                html = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(/\n/g, '<br>');
             }
+            element.innerHTML = window.DOMPurify
+                ? window.DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'rel', 'style'] })
+                : html;
+            linkifyResponse(element);
+            element.querySelectorAll('a').forEach(a => {
+                a.style.color = '#3b9cff';
+                a.style.textDecoration = 'underline';
+                a.style.textUnderlineOffset = '3px';
+                if (a.target === '_blank') a.rel = 'noopener noreferrer';
+            });
         }
+
+        async function typeText(element, text, speed = 0) {
+            // Render structured Markdown like ChatGPT/Gemini instead of showing raw **markers**.
+            renderAIResponse(element, text);
+            const chat = document.getElementById('chatContainer');
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function changeThemeMode(mode) {
+            const body = document.body;
+            body.classList.remove('theme-custom', 'theme-dark', 'theme-light', 'dark');
+            body.classList.add('theme-' + mode);
+            if (mode === 'dark' || mode === 'custom') body.classList.add('dark');
+
+            const app = document.querySelector('main');
+            if (mode === 'custom') {
+                body.classList.add('app-bg');
+                body.style.backgroundImage = '';
+            } else {
+                body.classList.remove('app-bg');
+                body.style.backgroundImage = 'none';
+            }
+            if (app) app.style.backgroundColor = mode === 'light' ? '#f8fafc' : (mode === 'dark' ? '#111827' : 'transparent');
+
+            const chat = document.getElementById('chatContainer');
+            if (chat) {
+                chat.querySelectorAll('.ai-bubble').forEach(bubble => {
+                    bubble.style.background = mode === 'light' ? 'rgba(255,255,255,.96)' :
+                        (mode === 'dark' ? 'rgba(45,48,54,.97)' : '');
+                    bubble.style.color = mode === 'light' ? '#172033' : '';
+                });
+            }
+            const selector = document.getElementById('themeMode');
+            if (selector && selector.value !== mode) selector.value = mode;
+            try { localStorage.setItem('bulinga_theme_mode', mode); } catch (e) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let savedTheme = 'custom';
+            try { savedTheme = localStorage.getItem('bulinga_theme_mode') || 'custom'; } catch (e) {}
+            changeThemeMode(savedTheme);
+        });
 
         async function sendMessage(e) {
             e.preventDefault();
@@ -733,7 +842,7 @@ async def chat_ui():
                         <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden p-1">
                             <img src="/static/btss.png" class="w-full h-full object-contain" alt="BTSS">
                         </div>
-                        <div class="flex-1 bg-white/95 dark:bg-[#3a3b3c]/95 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md flex flex-col gap-2">
+                        <div class="ai-bubble flex-1 bg-white/95 dark:bg-[#3a3b3c]/95 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md flex flex-col gap-2">
                             <div id="${contentId}" class="ai-response-content"></div>
                             ${data.generated_img ? `<img src="${data.generated_img}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Generated Image">` : ''}
                             ${imagesHtml}
