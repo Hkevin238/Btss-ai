@@ -1,12 +1,17 @@
 import os
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from groq import Groq
 import urllib.parse
 import random
-from supabase import create_client, Client
+import sqlite3
+import hashlib
+import hmac
+import secrets
+from datetime import datetime, timedelta, timezone
 
 app = FastAPI(title="BULINGA TSS AI")
 
@@ -14,18 +19,104 @@ app = FastAPI(title="BULINGA TSS AI")
 app.mount("/static", StaticFiles(directory="."), name="static")
 
 # =========================================================
-# GROQ & SUPABASE CONFIGURATION
+# GROQ & BUILT-IN AUTHENTICATION CONFIGURATION
 # =========================================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY or "YOUR_GROQ_API_KEY")
 
-# Guhuza na Supabase ukoresha Environment Variables
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
-# Use the Supabase ANON/PUBLISHABLE key here. Never expose the service_role key.
-SUPABASE_KEY = (os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("SUPABASE_KEY") or "").strip()
-supabase: Client | None = None
-if SUPABASE_URL and SUPABASE_KEY:
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+# SQLite is used for ordinary email/password authentication.
+# Keep the database outside the publicly served static directory.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+AUTH_DB_PATH = os.environ.get(
+    "AUTH_DB_PATH",
+    os.path.abspath(os.path.join(BASE_DIR, "..", "bulinga_auth.db"))
+)
+os.makedirs(os.path.dirname(AUTH_DB_PATH) or ".", exist_ok=True)
+
+PASSWORD_ITERATIONS = 310_000
+SESSION_DAYS = 30
+SESSION_COOKIE_NAME = "bulinga_session"
+
+
+def get_auth_db():
+    connection = sqlite3.connect(AUTH_DB_PATH)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def initialize_auth_database():
+    with get_auth_db() as db:
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                full_name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password_salt TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS sessions (
+                token_hash TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                expires_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        """)
+
+
+def hash_password(password: str, salt: bytes | None = None):
+    salt = salt or secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt, PASSWORD_ITERATIONS
+    )
+    return salt.hex(), digest.hex()
+
+
+def create_user_session(user_id: int, request: Request):
+    token = secrets.token_urlsafe(48)
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    expires_at = datetime.now(timezone.utc) + timedelta(days=SESSION_DAYS)
+    with get_auth_db() as db:
+        db.execute(
+            "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)",
+            (token_hash, user_id, expires_at.isoformat())
+        )
+
+    response = JSONResponse({"success": True})
+    forwarded_proto = request.headers.get("x-forwarded-proto", "")
+    secure_cookie = request.url.scheme == "https" or forwarded_proto.split(",")[0].strip() == "https"
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=secure_cookie,
+        samesite="lax",
+        max_age=SESSION_DAYS * 24 * 60 * 60,
+        path="/"
+    )
+    return response
+
+
+def get_authenticated_user(request: Request):
+    token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not token:
+        return None
+
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    now = datetime.now(timezone.utc).isoformat()
+    with get_auth_db() as db:
+        row = db.execute("""
+            SELECT users.id, users.full_name, users.email
+            FROM sessions
+            JOIN users ON users.id = sessions.user_id
+            WHERE sessions.token_hash = ? AND sessions.expires_at > ?
+        """, (token_hash, now)).fetchone()
+    return dict(row) if row else None
+
+
+initialize_auth_database()
 
 # =========================================================
 # UI TRANSLATIONS DICTIONARY
@@ -52,7 +143,7 @@ translations = {
         "thinking": "⚪ Bulinga is Thinking....... 💭",
         "img_resp": "Dore amafoto ajyanye na Bulinga Technical Secondary School nk'uko wabinsabye! 📸✨",
         "gen_img_resp": "Dore ifoto wasabye ko nkukorera cyangwa ko nkushushanyiriza! 🎨✨",
-        "map_resp": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> kugira ngo ubashe kureba icyerekezo cy\'ishuri ryacu! 🗺️📍✨',
+        "map_resp": 'Urashaka kureba aho ishuri riherereye? Ushobora gukanda hano wanditse <a href="https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3291m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #4dabf7; text-decoration: underline;">Kanda Hano kugirango urebe aho ishuri riherereye</a> kugira ngo ubashe kureba icyerekezo cy\'ishuri ryacu! 🗺️📍✨',
         "upload_placeholder": "Hitamo ifoto yo kohereza...",
         "dev_btn": "👨‍💻 Reba kuri Developer Kevin"
     },
@@ -77,7 +168,7 @@ translations = {
         "thinking": "⚪ Bulinga is Thinking.......",
         "img_resp": "Here are the photos related to Bulinga Technical Secondary School as you requested! 📸✨",
         "gen_img_resp": "Here is the generated image you asked me to create! 🎨✨",
-        "map_resp": 'Do you want to see where the school is located? You can click here to open <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> to find the direction to our school! 🗺️📍✨',
+        "map_resp": 'Do you want to see where the school is located? You can click here to open <a href="https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3291m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #4dabf7; text-decoration: underline;">Kanda Hano kugirango urebe aho ishuri riherereye</a> to find the direction to our school! 🗺️📍✨',
         "upload_placeholder": "Choose image to upload...",
         "dev_btn": "👨‍💻 View About Developer Kevin"
     },
@@ -102,7 +193,7 @@ translations = {
         "thinking": "⚪ Bulinga is Thinking.......",
         "img_resp": "Voici les photos relatives à l'École Secondaire Technique de Bulinga comme demandé !",
         "gen_img_resp": "Voici l'image générée que vous m'avez demandé de créer ! 🎨✨",
-        "map_resp": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> pour trouver l\'itinéraire ! 🗺️📍✨',
+        "map_resp": 'Voulez-vous voir où se trouve l\'école ? Vous pouvez cliquer ici pour ouvrir <a href="https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3291m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #4dabf7; text-decoration: underline;">Kanda Hano kugirango urebe aho ishuri riherereye</a> pour trouver l\'itinéraire ! 🗺️📍✨',
         "upload_placeholder": "Choisir une image à télécharger...",
         "dev_btn": "👨‍💻 Voir À propos de Developer Kevin"
     },
@@ -127,7 +218,7 @@ translations = {
         "thinking": "⚪ Bulinga is Thinking.......",
         "img_resp": "Hapa kuna picha zinazohusiana na Shule ya Sekondari ya Ufundi ya Bulinga kama ulivyoomba! 📸✨",
         "gen_img_resp": "Hapa kuna picha uliyoniomba nitengeneze! 🎨✨",
-        "map_resp": 'Je, unataka kuona shule ilipo? Unaweza kubonyeza hapa kufungua <a href="https://maps.google.com/?cid=5000695181927039479&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" target="_blank" style="color: #4dabf7; text-decoration: underline;">Google Map</a> kupata mwelekeo wa shule yetu! 🗺️📍✨',
+        "map_resp": 'Je, unataka kuona shule ilipo? Unaweza kubonyeza hapa kufungua <a href="https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3291m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #4dabf7; text-decoration: underline;">Kanda Hano kugirango urebe aho ishuri riherereye</a> kupata mwelekeo wa shule yetu! 🗺️📍✨',
         "upload_placeholder": "Chagua picha ya kupakia...",
         "dev_btn": "👨‍💻 Tazama Kuhusu Developer Kevin"
     }
@@ -139,7 +230,7 @@ for BULINGA TECHNICAL SECONDARY SCHOOL (BULINGA TS SCHOOL).
 
 CRITICAL RULE REGARDING CREATOR:
 - You were developed, created, and built exclusively by Developer/Programmer Kevin.
-- You must provide/give/notify someone who needs to contact Dev Kevin to visit his Portfolio Webpage using this nice clickable link format: <a href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" style="color: #4dabf7; text-decoration: underline;">View About Developer Kevin</a>.
+- You must provide/give/notify someone who needs to contact Dev Kevin to visit his Portfolio Webpage using this nice clickable link format: <a href="https://lovable.dev/projects/2d0e0900-16e8-4e8c-90fe-b2df1c0999c2" target="_blank" style="color: #4dabf7; text-decoration: underline;">View About Developer Kevin</a>.
 - NEVER mention OpenAI, ChatGPT, or any other outside entities as your creator. If anyone asks who made you, built you, or programmed you, proudly state that you were developed and built by Developer Kevin 👨‍💻🚀 and his email: therealhacks583@gmail.com , Website: www.kevinhakiza.com (not BULINGA TSS programmers).
 
 EMOJI RULE:
@@ -172,19 +263,80 @@ Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Em
 -Detect ,Listen carefully,Analyse the users request or prompt in order to respond clearly the user needs , wants ,request.
 -You must avoid specify , notify ,provide the direct info about Kevin, DOS ,DOD ,HOD , etc while you are asked to provide.
 -You must generate , create the attractive clickable google map link of Bulinga which include these(https://www.google.com/maps/place/Bulinga/@-1.995589,29.703555,758m/data=!3m2!1e3!4b1!4m6!3m5!1s0x19dcc6049eb61033:0x981c134ac3a66bfd!8m2!3d-1.9969026!4d29.7064051!16s%2Fg%2F1tkzjh6d?entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D) and then Type , write on it this word : See Location of Bulinga on Google map.
--You must also give the Google Map Clickable link of BULINGA TSS which includes(https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3033m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D) and then Type , write on it this word: See Location of Bulinga TSS on Google map
+-When a user asks for the Google Maps link or location of BULINGA TSS, always provide this exact clickable link: <a href="https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3291m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #4dabf7; text-decoration: underline;">Kanda Hano kugirango urebe aho ishuri riherereye</a>.
 -if someone ask , Camera man , photographer, image capturer, or someone related with images,photos , etc , You must output, response , answer this: ERIC Dushimimana and his Email:dushimimanaeric075@gmail.com(for more info),this is who is Professional at image preparation, and other related
 """
 
 # =========================================================
 # CHAT & API ENDPOINTS
 # =========================================================
-@app.get("/api/config")
-async def public_config():
-    return JSONResponse({
-        "supabase_url": SUPABASE_URL,
-        "supabase_anon_key": SUPABASE_KEY
-    })
+class AuthPayload(BaseModel):
+    email: str
+    password: str
+    full_name: str = ""
+
+
+@app.post("/api/auth/signup")
+async def signup(payload: AuthPayload, request: Request):
+    email = payload.email.strip().lower()
+    full_name = payload.full_name.strip() or email.split("@")[0]
+    if len(payload.password) < 6:
+        raise HTTPException(status_code=400, detail="Password igomba kugira nibura inyuguti 6.")
+
+    salt_hex, password_hash = hash_password(payload.password)
+    try:
+        with get_auth_db() as db:
+            cursor = db.execute("""
+                INSERT INTO users (full_name, email, password_salt, password_hash, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                full_name, email, salt_hex, password_hash,
+                datetime.now(timezone.utc).isoformat()
+            ))
+            user_id = cursor.lastrowid
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=409, detail="Iyi email isanzwe ifite konti. Injira aho gufungura indi.")
+
+    return create_user_session(user_id, request)
+
+
+@app.post("/api/auth/login")
+async def login(payload: AuthPayload, request: Request):
+    email = payload.email.strip().lower()
+    with get_auth_db() as db:
+        user = db.execute(
+            "SELECT id, full_name, email, password_salt, password_hash FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Email cyangwa password si byo.")
+
+    _, submitted_hash = hash_password(payload.password, bytes.fromhex(user["password_salt"]))
+    if not hmac.compare_digest(submitted_hash, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Email cyangwa password si byo.")
+
+    return create_user_session(user["id"], request)
+
+
+@app.get("/api/auth/me")
+async def auth_me(request: Request):
+    user = get_authenticated_user(request)
+    if not user:
+        return JSONResponse({"authenticated": False})
+    return JSONResponse({"authenticated": True, "user": user})
+
+
+@app.post("/api/auth/logout")
+async def auth_logout(request: Request):
+    token = request.cookies.get(SESSION_COOKIE_NAME)
+    if token:
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        with get_auth_db() as db:
+            db.execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash,))
+    response = JSONResponse({"success": True})
+    response.delete_cookie(SESSION_COOKIE_NAME, path="/")
+    return response
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -299,15 +451,6 @@ async def chat_ui():
                 <button id="authSubmitBtn" type="submit" class="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 transition">Login 🔓</button>
             </form>
 
-            <div class="flex items-center gap-3 my-4">
-                <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
-                <span class="text-xs text-gray-400">OR</span>
-                <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
-            </div>
-
-            <button type="button" onclick="continueWithGoogle()" class="w-full rounded-xl border border-gray-300 dark:border-gray-700 py-3 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition flex items-center justify-center gap-3">
-                <span class="font-bold text-lg">G</span> Continue with Google
-            </button>
             <button type="button" onclick="continueAsGuest()" class="w-full mt-3 rounded-xl bg-gray-100 dark:bg-gray-800 py-3 font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                 Continue without Register ⚡
             </button>
@@ -365,7 +508,7 @@ async def chat_ui():
             </button>
 
             <!-- View About Developer Kevin Button/Link -->
-            <a id="devLinkBtn" href="https://lovable.dev/preview/NlmPFklB47I6mwerLhQW8hKO4Fmjp39B" target="_blank" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
+            <a id="devLinkBtn" href="https://lovable.dev/projects/2d0e0900-16e8-4e8c-90fe-b2df1c0999c2" target="_blank" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
                 👨‍💻 View About Developer Kevin
             </a>
         </div>
@@ -412,35 +555,21 @@ async def chat_ui():
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        let supabaseClient = null;
         let currentAuthMode = 'login';
         let currentUser = null;
         let guestMode = false;
 
         async function initializeAuthentication() {
             try {
-                const configResponse = await fetch('/api/config');
-                const config = await configResponse.json();
-                if (config.supabase_url && config.supabase_anon_key && window.supabase) {
-                    supabaseClient = window.supabase.createClient(config.supabase_url, config.supabase_anon_key);
-                    const { data: { session } } = await supabaseClient.auth.getSession();
-                    if (session) {
-                        currentUser = session.user;
-                        enterChat(currentUser.email || currentUser.user_metadata?.full_name || 'User');
-                    }
-                    supabaseClient.auth.onAuthStateChange((_event, session) => {
-                        if (session) {
-                            currentUser = session.user;
-                            enterChat(currentUser.email || currentUser.user_metadata?.full_name || 'User');
-                        }
-                    });
-                } else {
-                    showAuthMessage('Authentication is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY in your hosting environment.');
+                const response = await fetch('/api/auth/me', { credentials: 'same-origin' });
+                const data = await response.json();
+                if (data.authenticated && data.user) {
+                    currentUser = data.user;
+                    enterChat(currentUser.full_name || currentUser.email);
                 }
             } catch (error) {
-                showAuthMessage('Could not initialize authentication. Check your Supabase settings.');
+                showAuthMessage('Ntibishobotse kugenzura konti. Ongera ugerageze.', true);
             }
         }
 
@@ -469,11 +598,6 @@ async def chat_ui():
 
         async function submitEmailAuth(event) {
             event.preventDefault();
-            if (!supabaseClient) {
-                showAuthMessage('Supabase is not configured. Please check the server environment variables.', true);
-                return;
-            }
-
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value;
             const fullName = document.getElementById('authName').value.trim();
@@ -482,44 +606,25 @@ async def chat_ui():
             button.textContent = 'Please wait...';
 
             try {
-                if (currentAuthMode === 'signup') {
-                    const { data, error } = await supabaseClient.auth.signUp({
-                        email,
-                        password,
-                        options: { data: { full_name: fullName } }
-                    });
-                    if (error) throw error;
-                    if (data.session) {
-                        currentUser = data.user;
-                        enterChat(email);
-                    } else {
-                        showAuthMessage('Account created. Check your email to confirm, then log in.');
-                        setAuthMode('login');
-                    }
-                } else {
-                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                    if (error) throw error;
-                    currentUser = data.user;
-                    enterChat(email);
-                }
+                const endpoint = currentAuthMode === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ email, password, full_name: fullName })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Authentication failed.');
+
+                currentUser = { email, full_name: fullName || email.split('@')[0] };
+                guestMode = false;
+                enterChat(currentUser.full_name);
             } catch (error) {
                 showAuthMessage(error.message || 'Authentication failed.', true);
             } finally {
                 button.disabled = false;
                 button.textContent = currentAuthMode === 'signup' ? 'Create Account 🚀' : 'Login 🔓';
             }
-        }
-
-        async function continueWithGoogle() {
-            if (!supabaseClient) {
-                showAuthMessage('Supabase is not configured. Please check the server environment variables.', true);
-                return;
-            }
-            const { error } = await supabaseClient.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: window.location.origin }
-            });
-            if (error) showAuthMessage(error.message, true);
         }
 
         function continueAsGuest() {
@@ -535,8 +640,15 @@ async def chat_ui():
         }
 
         async function logout() {
-            if (supabaseClient && currentUser) {
-                await supabaseClient.auth.signOut();
+            try {
+                if (currentUser) {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        credentials: 'same-origin'
+                    });
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
             }
             currentUser = null;
             guestMode = false;
@@ -622,8 +734,6 @@ async def chat_ui():
         function clearHistory() {
             document.getElementById('chatContainer').innerHTML = '';
         }
-
-        // Logout is handled by the Supabase-aware logout() function above.
 
         function wait(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
@@ -809,16 +919,9 @@ async def chat_ui():
                     formData.append('file', fileInput.files[0]);
                 }
 
-                const requestHeaders = {};
-                if (supabaseClient) {
-                    const { data: { session } } = await supabaseClient.auth.getSession();
-                    if (session?.access_token) {
-                        requestHeaders.Authorization = `Bearer ${session.access_token}`;
-                    }
-                }
                 const response = await fetch('/api/chat', {
                     method: 'POST',
-                    headers: requestHeaders,
+                    credentials: 'same-origin',
                     body: formData
                 });
                 const data = await response.json();
@@ -866,25 +969,11 @@ async def chat_ui():
 
 @app.post("/api/chat")
 async def chat_endpoint(
-    request: Request,
     query: str = Form(...),
     response_lang: str = Form("Kinyarwanda"),
     file: UploadFile = File(None)
 ):
     try:
-        # Guest requests are allowed. If a token is supplied, it must be valid.
-        authorization = request.headers.get("Authorization", "")
-        if authorization.startswith("Bearer "):
-            if not supabase:
-                return JSONResponse({"response": "Authentication service is not configured.", "local_images": [], "generated_img": None}, status_code=503)
-            access_token = authorization.split(" ", 1)[1].strip()
-            try:
-                supabase.auth.get_user(access_token)
-            except Exception:
-                return JSONResponse({"response": "Your session has expired. Please log in again.", "local_images": [], "generated_img": None}, status_code=401)
-        # Hano ushobora gukoresha supabase nka query cyangwa insert niba ubikeneye:
-        # urugero: supabase.table("chat_logs").insert({"query": query}).execute()
-
         completion = client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=[
