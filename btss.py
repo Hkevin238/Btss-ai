@@ -531,9 +531,9 @@ async def chat_ui():
                 🗑️ Clear Chat History
             </button>
 
-            <!-- View About Developer Kevin Button/Link -->
+            <!-- View About Developer Button/Link -->
             <a id="devLinkBtn" href="https://lovable.dev/projects/2d0e0900-16e8-4e8c-90fe-b2df1c0999c2" target="_blank" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
-                👨‍💻 View About Developer Kevin
+                👨‍💻 View About Developer
             </a>
         </div>
 
@@ -748,11 +748,11 @@ async def chat_ui():
                 "lbl_sys": "🌐 Ururimi rwa System",
                 "lbl_resp": "💬 Ururimi rw'Igisubizo",
                 "clear_history": "🗑️ Hanagura Amateka y'Ibiganiro",
-                "dev_link": "👨‍💻 Reba kuri Developer Kevin",
+                "dev_link": "👨‍💻 Reba kuri Developer",
                 "logout": "Sohoka",
                 "main_title": "BULINGA AI Assistant 🚀",
                 "placeholder": "Baza icyo ushaka cyose cyangwa wandike 'Amakuru ya Bulinga'...",
-                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
+                "footer": "Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking....... 💭"
             },
             "English": {
@@ -760,11 +760,11 @@ async def chat_ui():
                 "lbl_sys": "🌐 System Language",
                 "lbl_resp": "💬 Response Language",
                 "clear_history": "🗑️ Clear Chat History",
-                "dev_link": "👨‍💻 View About Developer Kevin",
+                "dev_link": "👨‍💻 View About Developer",
                 "logout": "Logout",
                 "main_title": "BULINGA AI Assistant 🚀",
                 "placeholder": "Ask anything or type like 'What about Bulinga info...'",
-                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
+                "footer": "Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             },
             "Français": {
@@ -772,11 +772,11 @@ async def chat_ui():
                 "lbl_sys": "🌐 Langue du Système",
                 "lbl_resp": "💬 Langue de Réponse",
                 "clear_history": "🗑️ Effacer l'historique",
-                "dev_link": "👨‍💻 Voir À propos de Developer Kevin",
+                "dev_link": "👨‍💻 Voir À propos de Developer",
                 "logout": "Se déconnecter",
                 "main_title": "Assistant IA BULINGA 🚀",
                 "placeholder": "Posez une question ou tapez 'Amakuru ya Bulinga'...",
-                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
+                "footer": "Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             },
             "Kiswahili": {
@@ -788,7 +788,7 @@ async def chat_ui():
                 "logout": "Toka",
                 "main_title": "Msaidizi wa AI wa BULINGA 🚀",
                 "placeholder": "Uliza chochote auandike 'Amakuru ya Bulinga'...",
-                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
+                "footer": "Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             }
         };
@@ -1011,9 +1011,9 @@ async def chat_ui():
                 await wait(800);
                 textEl.innerText = "Generating your image.......";
                 await wait(800);
-                textEl.innerText = "Please wait a moment......";
+                textEl.innerText = "Please wait a moment😍......";
                 await wait(800);
-                textEl.innerText = "Be ready to see a Magic 🪄";
+                textEl.innerText = "Be ready to see a Magic ✨";
                 await wait(800);
             } else {
                 await wait(120);
