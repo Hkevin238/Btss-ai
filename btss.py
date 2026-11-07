@@ -20,9 +20,12 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY or "YOUR_GROQ_API_KEY")
 
 # Guhuza na Supabase ukoresha Environment Variables
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL or "YOUR_SUPABASE_URL", SUPABASE_KEY or "YOUR_SUPABASE_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
+# Use the Supabase ANON/PUBLISHABLE key here. Never expose the service_role key.
+SUPABASE_KEY = (os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("SUPABASE_KEY") or "").strip()
+supabase: Client | None = None
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # =========================================================
 # UI TRANSLATIONS DICTIONARY
@@ -176,6 +179,14 @@ Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Em
 # =========================================================
 # CHAT & API ENDPOINTS
 # =========================================================
+@app.get("/api/config")
+async def public_config():
+    return JSONResponse({
+        "supabase_url": SUPABASE_URL,
+        "supabase_anon_key": SUPABASE_KEY
+    })
+
+
 @app.get("/", response_class=HTMLResponse)
 async def chat_ui():
     return """
@@ -226,6 +237,53 @@ async def chat_ui():
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-darkBg text-gray-900 dark:text-gray-100 h-screen flex overflow-hidden app-bg">
+
+    <!-- AUTHENTICATION SCREEN -->
+    <section id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+        <div class="w-full max-w-md rounded-3xl border border-white/10 bg-white dark:bg-[#18191a] p-7 shadow-2xl">
+            <div class="text-center mb-6">
+                <img src="/static/btss.png" alt="BULINGA TSS" class="w-16 h-16 object-contain mx-auto mb-3">
+                <h1 class="text-2xl font-extrabold">BULINGA TSS AI 🏫</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Sign in, create an account, or continue as a guest.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-5 rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
+                <button id="loginTab" type="button" onclick="setAuthMode('login')" class="py-2 rounded-lg bg-blue-600 text-white font-semibold">Login</button>
+                <button id="signupTab" type="button" onclick="setAuthMode('signup')" class="py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold">Sign Up</button>
+            </div>
+
+            <form id="authForm" onsubmit="submitEmailAuth(event)" class="space-y-3">
+                <div id="nameField" class="hidden">
+                    <label class="text-xs font-semibold text-gray-500">Full name</label>
+                    <input id="authName" type="text" autocomplete="name" placeholder="Your name" class="mt-1 w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-3 outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-gray-500">Email address</label>
+                    <input id="authEmail" type="email" required autocomplete="email" placeholder="you@example.com" class="mt-1 w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-3 outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-gray-500">Password</label>
+                    <input id="authPassword" type="password" required minlength="6" autocomplete="current-password" placeholder="At least 6 characters" class="mt-1 w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-3 outline-none focus:border-blue-500">
+                </div>
+                <button id="authSubmitBtn" type="submit" class="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 transition">Login 🔓</button>
+            </form>
+
+            <div class="flex items-center gap-3 my-4">
+                <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                <span class="text-xs text-gray-400">OR</span>
+                <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+
+            <button type="button" onclick="continueWithGoogle()" class="w-full rounded-xl border border-gray-300 dark:border-gray-700 py-3 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition flex items-center justify-center gap-3">
+                <span class="font-bold text-lg">G</span> Continue with Google
+            </button>
+            <button type="button" onclick="continueAsGuest()" class="w-full mt-3 rounded-xl bg-gray-100 dark:bg-gray-800 py-3 font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                Continue without Register ⚡
+            </button>
+            <p id="authMessage" role="status" class="text-sm text-center mt-4 text-blue-500"></p>
+            <p class="text-[11px] text-center text-gray-400 mt-4">Your account is managed securely by Supabase Authentication.</p>
+        </div>
+    </section>
 
     <!-- SIDEBAR -->
     <aside id="sidebar" class="w-72 bg-white/95 dark:bg-sidebarBg/95 backdrop-blur border-r border-gray-200 dark:border-gray-800 flex flex-col justify-between transition-all duration-300 z-20">
@@ -314,7 +372,141 @@ async def chat_ui():
         </div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        let supabaseClient = null;
+        let currentAuthMode = 'login';
+        let currentUser = null;
+        let guestMode = false;
+
+        async function initializeAuthentication() {
+            try {
+                const configResponse = await fetch('/api/config');
+                const config = await configResponse.json();
+                if (config.supabase_url && config.supabase_anon_key && window.supabase) {
+                    supabaseClient = window.supabase.createClient(config.supabase_url, config.supabase_anon_key);
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session) {
+                        currentUser = session.user;
+                        enterChat(currentUser.email || currentUser.user_metadata?.full_name || 'User');
+                    }
+                    supabaseClient.auth.onAuthStateChange((_event, session) => {
+                        if (session) {
+                            currentUser = session.user;
+                            enterChat(currentUser.email || currentUser.user_metadata?.full_name || 'User');
+                        }
+                    });
+                } else {
+                    showAuthMessage('Authentication is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY in your hosting environment.');
+                }
+            } catch (error) {
+                showAuthMessage('Could not initialize authentication. Check your Supabase settings.');
+            }
+        }
+
+        function showAuthMessage(message, isError = false) {
+            const el = document.getElementById('authMessage');
+            if (el) {
+                el.textContent = message;
+                el.className = 'text-sm text-center mt-4 ' + (isError ? 'text-red-500' : 'text-blue-500');
+            }
+        }
+
+        function setAuthMode(mode) {
+            currentAuthMode = mode;
+            const signup = mode === 'signup';
+            document.getElementById('nameField').classList.toggle('hidden', !signup);
+            document.getElementById('authPassword').autocomplete = signup ? 'new-password' : 'current-password';
+            document.getElementById('authSubmitBtn').textContent = signup ? 'Create Account 🚀' : 'Login 🔓';
+            document.getElementById('loginTab').className = signup
+                ? 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold'
+                : 'py-2 rounded-lg bg-blue-600 text-white font-semibold';
+            document.getElementById('signupTab').className = signup
+                ? 'py-2 rounded-lg bg-blue-600 text-white font-semibold'
+                : 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold';
+            showAuthMessage('');
+        }
+
+        async function submitEmailAuth(event) {
+            event.preventDefault();
+            if (!supabaseClient) {
+                showAuthMessage('Supabase is not configured. Please check the server environment variables.', true);
+                return;
+            }
+
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const fullName = document.getElementById('authName').value.trim();
+            const button = document.getElementById('authSubmitBtn');
+            button.disabled = true;
+            button.textContent = 'Please wait...';
+
+            try {
+                if (currentAuthMode === 'signup') {
+                    const { data, error } = await supabaseClient.auth.signUp({
+                        email,
+                        password,
+                        options: { data: { full_name: fullName } }
+                    });
+                    if (error) throw error;
+                    if (data.session) {
+                        currentUser = data.user;
+                        enterChat(email);
+                    } else {
+                        showAuthMessage('Account created. Check your email to confirm, then log in.');
+                        setAuthMode('login');
+                    }
+                } else {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    currentUser = data.user;
+                    enterChat(email);
+                }
+            } catch (error) {
+                showAuthMessage(error.message || 'Authentication failed.', true);
+            } finally {
+                button.disabled = false;
+                button.textContent = currentAuthMode === 'signup' ? 'Create Account 🚀' : 'Login 🔓';
+            }
+        }
+
+        async function continueWithGoogle() {
+            if (!supabaseClient) {
+                showAuthMessage('Supabase is not configured. Please check the server environment variables.', true);
+                return;
+            }
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.origin }
+            });
+            if (error) showAuthMessage(error.message, true);
+        }
+
+        function continueAsGuest() {
+            guestMode = true;
+            currentUser = null;
+            enterChat('Guest');
+        }
+
+        function enterChat(label) {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('userDisplay').textContent = '👤 ' + label;
+            document.getElementById('logoutBtnText').textContent = 'Logout';
+        }
+
+        async function logout() {
+            if (supabaseClient && currentUser) {
+                await supabaseClient.auth.signOut();
+            }
+            currentUser = null;
+            guestMode = false;
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('userDisplay').textContent = '👤 Guest';
+            document.getElementById('authForm').reset();
+            setAuthMode('login');
+            document.getElementById('chatContainer').innerHTML = '';
+        }
+
         const translationsData = {
             "Kinyarwanda": {
                 "sidebar_title": "BULINGA TSS AI 🏫",
@@ -391,10 +583,7 @@ async def chat_ui():
             document.getElementById('chatContainer').innerHTML = '';
         }
 
-        function logout() {
-            alert('Logged out successfully!');
-            location.reload();
-        }
+        // Logout is handled by the Supabase-aware logout() function above.
 
         function wait(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
@@ -498,8 +687,16 @@ async def chat_ui():
                     formData.append('file', fileInput.files[0]);
                 }
 
+                const requestHeaders = {};
+                if (supabaseClient) {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session?.access_token) {
+                        requestHeaders.Authorization = `Bearer ${session.access_token}`;
+                    }
+                }
                 const response = await fetch('/api/chat', {
                     method: 'POST',
+                    headers: requestHeaders,
                     body: formData
                 });
                 const data = await response.json();
@@ -539,14 +736,30 @@ async def chat_ui():
                 alert('Connection error occurred.');
             }
         }
+        document.addEventListener('DOMContentLoaded', initializeAuthentication);
     </script>
 </body>
 </html>
     """
 
 @app.post("/api/chat")
-async def chat_endpoint(query: str = Form(...), response_lang: str = Form("Kinyarwanda"), file: UploadFile = File(None)):
+async def chat_endpoint(
+    request: Request,
+    query: str = Form(...),
+    response_lang: str = Form("Kinyarwanda"),
+    file: UploadFile = File(None)
+):
     try:
+        # Guest requests are allowed. If a token is supplied, it must be valid.
+        authorization = request.headers.get("Authorization", "")
+        if authorization.startswith("Bearer "):
+            if not supabase:
+                return JSONResponse({"response": "Authentication service is not configured.", "local_images": [], "generated_img": None}, status_code=503)
+            access_token = authorization.split(" ", 1)[1].strip()
+            try:
+                supabase.auth.get_user(access_token)
+            except Exception:
+                return JSONResponse({"response": "Your session has expired. Please log in again.", "local_images": [], "generated_img": None}, status_code=401)
         # Hano ushobora gukoresha supabase nka query cyangwa insert niba ubikeneye:
         # urugero: supabase.table("chat_logs").insert({"query": query}).execute()
 
