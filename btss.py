@@ -367,22 +367,32 @@ async def chat_ui():
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#121212',
-                        sidebarBg: '#18191a',
-                        bubbleUser: '#0084ff',
-                        bubbleAssistantDark: '#3a3b3c',
-                        bubbleAssistantLight: '#e0e0fb'
+        if (window.tailwind) {
+            window.tailwind.config = {
+                darkMode: 'class',
+                theme: {
+                    extend: {
+                        colors: {
+                            darkBg: '#121212',
+                            sidebarBg: '#18191a',
+                            bubbleUser: '#0084ff',
+                            bubbleAssistantDark: '#3a3b3c',
+                            bubbleAssistantLight: '#e0e0fb'
+                        }
                     }
                 }
-            }
+            };
         }
     </script>
     <style>
+        /* Local fallback: core controls must work even if the Tailwind CDN is blocked. */
+        .hidden { display: none !important; }
+        button, input, select { cursor: pointer; }
+        #authScreen { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 1rem; background: rgba(2, 6, 23, .94); }
+        #authScreen.hidden { display: none !important; }
+        #authScreen > div { width: 100%; max-width: 28rem; margin: auto; padding: 1.75rem; border-radius: 1.25rem; background: #18191a; color: #f8fafc; }
+        #authScreen input { width: 100%; box-sizing: border-box; padding: .8rem; border-radius: .7rem; color: #111827; background: #f9fafb; }
+        #authScreen button { min-height: 42px; }
         @keyframes bounceSlow {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-6px); }
@@ -599,6 +609,7 @@ async def chat_ui():
             currentAuthMode = mode;
             const signup = mode === 'signup';
             document.getElementById('nameField').classList.toggle('hidden', !signup);
+            document.getElementById('nameField').style.display = signup ? 'block' : 'none';
             document.getElementById('authName').required = signup;
             document.getElementById('authPassword').autocomplete = signup ? 'new-password' : 'current-password';
             document.getElementById('authSubmitBtn').textContent = signup ? 'Create Account 🚀' : 'Login 🔓';
@@ -705,6 +716,7 @@ async def chat_ui():
 
         function enterChat(label) {
             document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('authScreen').style.display = 'none';
             document.getElementById('userDisplay').textContent = '👤 ' + label;
             document.getElementById('logoutBtnText').textContent = 'Logout';
         }
@@ -723,6 +735,7 @@ async def chat_ui():
             currentUser = null;
             guestMode = false;
             document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('userDisplay').textContent = '👤 Guest';
             document.getElementById('authForm').reset();
             setAuthMode('login');
@@ -869,7 +882,7 @@ async def chat_ui():
                 html = window.marked.parse(raw, { gfm: true, breaks: true });
             } else {
                 html = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                    .replace(/\n/g, '<br>');
+                    .replace(/\\n/g, '<br>');
             }
             element.innerHTML = window.DOMPurify
                 ? window.DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'rel', 'style'] })
@@ -1031,7 +1044,13 @@ async def chat_ui():
                 alert('Connection error occurred.');
             }
         }
-        document.addEventListener('DOMContentLoaded', initializeAuthentication);
+        document.addEventListener('DOMContentLoaded', () => {
+            const authScreen = document.getElementById('authScreen');
+            if (authScreen && !authScreen.classList.contains('hidden')) authScreen.style.display = 'flex';
+            const nameField = document.getElementById('nameField');
+            if (nameField && currentAuthMode !== 'signup') nameField.style.display = 'none';
+            initializeAuthentication();
+        });
     </script>
 </body>
 </html>
