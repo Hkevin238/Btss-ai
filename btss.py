@@ -896,10 +896,35 @@ async def chat_ui():
             });
         }
 
-        async function typeText(element, text, speed = 0) {
-            // Render structured Markdown like ChatGPT/Gemini instead of showing raw **markers**.
-            renderAIResponse(element, text);
+        async function typeText(element, text, speed = 22) {
+            // Type one character at a time, with natural pauses like human typing.
+            const fullText = String(text || '');
             const chat = document.getElementById('chatContainer');
+
+            if (!fullText) {
+                renderAIResponse(element, '');
+                return;
+            }
+
+            const requestedSpeed = Number(speed) || 35;
+            const characterDelay = Math.max(25, Math.min(requestedSpeed, 55));
+
+            for (let position = 1; position <= fullText.length; position++) {
+                renderAIResponse(element, fullText.slice(0, position));
+                chat.scrollTop = chat.scrollHeight;
+
+                const currentChar = fullText[position - 1];
+                let delay = characterDelay + Math.random() * 18;
+
+                if (/[.!?]/.test(currentChar)) delay += 350;
+                else if (/[,;:]/.test(currentChar)) delay += 180;
+                else if (currentChar === '\n') delay += 220;
+                else if (currentChar === ' ') delay += 12;
+
+                await wait(delay);
+            }
+
+            renderAIResponse(element, fullText);
             chat.scrollTop = chat.scrollHeight;
         }
 
