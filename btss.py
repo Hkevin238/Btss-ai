@@ -897,7 +897,8 @@ async def chat_ui():
         }
 
         async function typeText(element, text, speed = 22) {
-            // Type one character at a time, with natural pauses like human typing.
+            // Reveal the response progressively, like a person typing.
+            // Markdown is re-rendered as the text grows, then finalized once.
             const fullText = String(text || '');
             const chat = document.getElementById('chatContainer');
 
@@ -906,24 +907,35 @@ async def chat_ui():
                 return;
             }
 
-            const requestedSpeed = Number(speed) || 35;
-            const characterDelay = Math.max(25, Math.min(requestedSpeed, 55));
+            // Slightly slower for long responses, while keeping short answers snappy.
+            const baseDelay = Math.max(8, Math.min(Number(speed) || 22, 60));
+            const totalLength = fullText.length;
+            const step = totalLength > 5000 ? 5 : totalLength > 1800 ? 4 : 3;
+            let position = 0;
+            let lastRender = 0;
 
-            for (let position = 1; position <= fullText.length; position++) {
-                renderAIResponse(element, fullText.slice(0, position));
-                chat.scrollTop = chat.scrollHeight;
+            while (position < totalLength) {
+                position = Math.min(position + step, totalLength);
+                const now = performance.now();
 
-                const currentChar = fullText[position - 1];
-                let delay = characterDelay + Math.random() * 18;
+                // Re-render at a controlled rate to avoid excessive DOM work.
+                if (now - lastRender >= 35 || position === totalLength) {
+                    renderAIResponse(element, fullText.slice(0, position));
+                    lastRender = now;
+                    chat.scrollTop = chat.scrollHeight;
+                }
 
-                if (/[.!?]/.test(currentChar)) delay += 350;
-                else if (/[,;:]/.test(currentChar)) delay += 180;
-                else if (currentChar === '\n') delay += 220;
-                else if (currentChar === ' ') delay += 12;
+                // Small natural variation prevents a perfectly mechanical rhythm.
+                const punctuation = fullText.slice(Math.max(0, position - 2), position);
+                let delay = baseDelay;
+                if (/[.!?]/.test(punctuation)) delay += 180;
+                else if (/[,;:]/.test(punctuation)) delay += 75;
+                else if (/\s/.test(punctuation)) delay += 8;
 
                 await wait(delay);
             }
 
+            // Ensure the final Markdown, links, and formatting are complete.
             renderAIResponse(element, fullText);
             chat.scrollTop = chat.scrollHeight;
         }
