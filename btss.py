@@ -764,7 +764,7 @@ async def chat_endpoint(
         # urugero: supabase.table("chat_logs").insert({"query": query}).execute()
 
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": BULINGA_INFO},
                 {"role": "user", "content": f"Respond in {response_lang}. User query: {query}"}
