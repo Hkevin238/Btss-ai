@@ -896,10 +896,47 @@ async def chat_ui():
             });
         }
 
-        async function typeText(element, text, speed = 0) {
-            // Render structured Markdown like ChatGPT/Gemini instead of showing raw **markers**.
-            renderAIResponse(element, text);
+        async function typeText(element, text, speed = 22) {
+            // Reveal the response progressively, like a person typing.
+            // Markdown is re-rendered as the text grows, then finalized once.
+            const fullText = String(text || '');
             const chat = document.getElementById('chatContainer');
+
+            if (!fullText) {
+                renderAIResponse(element, '');
+                return;
+            }
+
+            // Slightly slower for long responses, while keeping short answers snappy.
+            const baseDelay = Math.max(8, Math.min(Number(speed) || 22, 60));
+            const totalLength = fullText.length;
+            const step = totalLength > 5000 ? 5 : totalLength > 1800 ? 4 : 3;
+            let position = 0;
+            let lastRender = 0;
+
+            while (position < totalLength) {
+                position = Math.min(position + step, totalLength);
+                const now = performance.now();
+
+                // Re-render at a controlled rate to avoid excessive DOM work.
+                if (now - lastRender >= 35 || position === totalLength) {
+                    renderAIResponse(element, fullText.slice(0, position));
+                    lastRender = now;
+                    chat.scrollTop = chat.scrollHeight;
+                }
+
+                // Small natural variation prevents a perfectly mechanical rhythm.
+                const punctuation = fullText.slice(Math.max(0, position - 2), position);
+                let delay = baseDelay;
+                if (/[.!?]/.test(punctuation)) delay += 180;
+                else if (/[,;:]/.test(punctuation)) delay += 75;
+                else if (/\s/.test(punctuation)) delay += 8;
+
+                await wait(delay);
+            }
+
+            // Ensure the final Markdown, links, and formatting are complete.
+            renderAIResponse(element, fullText);
             chat.scrollTop = chat.scrollHeight;
         }
 
