@@ -268,7 +268,7 @@ Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Em
 -You must give , provide a related link when someone asks you to give an info you don't have , at this time you must provide the redirection link from the internet to help that someone to get the info they want.
 -You must Generate , Create an image if someone asks you to build ,generate , make a photo while based on his wish and wants.
 -If someone ask a photo related Bulinga TSS , Bulinga Technical Secondary School ; You must use this Github repository:Hkevin238/Btss-ai, and then search , find , scan one of the more image(.JPG, .PNG ,.JPEG , .TIFF ,.GIF .) etc about bulinga tss.
--Please , Don't disable , refuse for someone who's ask you the data , info you don't have , while create and scan , search on the web the website or where that data wants is , and then give , provide it later as Clickable LINK to redirect she , he there.
+-Please , Don't disable , refuse for someone who's ask you the data , info you don't have , while create and scan , search on the web the website or where that data wants is , and then give , provide it later as Clickable true , real LINK to redirect she , he there.
 
 RESPONSE QUALITY AND NATURAL WRITING RULES:
 - Write like a clear, knowledgeable human assistant having a normal conversation.
@@ -582,7 +582,7 @@ async def chat_ui():
                 <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-800/50">☰</button>
                 <span id="mainHeaderTitle" class="font-bold text-base">BULINGA AI Assistant 🚀</span>
             </div>
-            <div id="rotatingNotice" class="text-xs text-blue-400 font-medium hidden sm:block">Urakaza neza kuri BTSS AI Assistant! 🙏✨</div>
+            <div id="rotatingNotice" class="text-xs text-blue-400 font-medium hidden sm:block"><marquee direction="right">Urakaza neza kuri BTSS AI Assistant! 🙏✨</marquee direction></div>
         </header>
 
         <!-- Chat Messages Feed -->
@@ -606,7 +606,7 @@ async def chat_ui():
                 </button>
             </form>
             <div id="fileIndicator" class="text-xs text-blue-400 mt-1 px-2 hidden"></div>
-            <div id="footerCredit" class="text-center text-[11px] text-gray-300 mt-2">Developed by Developer Kevin • Bulinga TSS AI</div>
+            <div id="footerCredit" class="text-center text-[11px] text-gray-300 mt-2">Dev Kevin • Bulinga TSS AI</div>
         </div>
     </main>
 
