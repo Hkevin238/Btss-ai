@@ -265,6 +265,18 @@ Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Em
 -You must generate , create the attractive clickable google map link of Bulinga which include these(https://www.google.com/maps/place/Bulinga/@-1.995589,29.703555,758m/data=!3m2!1e3!4b1!4m6!3m5!1s0x19dcc6049eb61033:0x981c134ac3a66bfd!8m2!3d-1.9969026!4d29.7064051!16s%2Fg%2F1tkzjh6d?entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D) and then Type , write on it this word : See Location of Bulinga on Google map.
 -When a user asks for the Google Maps link or location of BULINGA TSS, always provide this exact clickable link: <a href="https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3291m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #4dabf7; text-decoration: underline;">Kanda Hano kugirango urebe aho ishuri riherereye</a>.
 -if someone ask , Camera man , photographer, image capturer, or someone related with images,photos , etc , You must output, response , answer this: ERIC Dushimimana and his Email:dushimimanaeric075@gmail.com(for more info),this is who is Professional at image preparation, and other related
+
+RESPONSE QUALITY AND NATURAL WRITING RULES:
+- Write like a clear, knowledgeable human assistant having a normal conversation.
+- Answer the user's exact question directly. Do not add unrelated information or unnecessary introductions.
+- Use natural, complete sentences and well-organized paragraphs.
+- Keep answers concise when the question is simple; give detail only when it is useful.
+- Use headings, bullet points, numbered lists, tables, code blocks, bold text, and emojis only when they genuinely improve readability. Do not force them into every answer.
+- Never return malformed Markdown, broken HTML, raw JSON, or decorative symbols that make the answer difficult to read unless the user specifically requests that format.
+- Do not invent facts, names, links, figures, school details, or sources. If information is not available or uncertain, say so clearly.
+- For coding questions, provide valid, readable code and explain only the important parts.
+- Respect the response language selected by the user.
+- Keep the response aligned with the user's request and the BULINGA TSS context when relevant.
 """
 
 # =========================================================
@@ -412,6 +424,20 @@ async def chat_ui():
             overflow-wrap: anywhere;
             line-height: 1.75;
             font-size: 0.94rem;
+        }
+        .ai-response-content {
+            direction: ltr;
+            text-align: left;
+            unicode-bidi: plaintext;
+            overflow-wrap: break-word;
+            word-break: normal;
+        }
+        .ai-response-content.typing-response {
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: normal;
+            direction: ltr;
+            text-align: left;
         }
         .ai-response-content p { margin: 0.55rem 0; }
         .ai-response-content h1, .ai-response-content h2, .ai-response-content h3 {
@@ -583,89 +609,51 @@ async def chat_ui():
         let currentAuthMode = 'login';
         let currentUser = null;
         let guestMode = false;
-        let authBusy = false;
 
         async function initializeAuthentication() {
-            const authScreen = document.getElementById('authScreen');
             try {
-                const response = await fetch('/api/auth/me', {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    cache: 'no-store',
-                    headers: { 'Accept': 'application/json' }
-                });
+                const response = await fetch('/api/auth/me', { credentials: 'same-origin' });
                 const data = await response.json();
-
-                if (response.ok && data.authenticated && data.user) {
+                if (data.authenticated && data.user) {
                     currentUser = data.user;
-                    guestMode = false;
                     enterChat(currentUser.full_name || currentUser.email);
-                } else {
-                    currentUser = null;
-                    if (authScreen) {
-                        authScreen.classList.remove('hidden');
-                        authScreen.style.display = 'flex';
-                    }
-                    setAuthMode('login');
                 }
             } catch (error) {
-                console.error('Session check error:', error);
-                if (authScreen) {
-                    authScreen.classList.remove('hidden');
-                    authScreen.style.display = 'flex';
-                }
-                showAuthMessage('Ntibishobotse kugenzura konti. Ushobora kongera kugerageza cyangwa ugakomeza nka Guest.', true);
+                showAuthMessage('Ntibishobotse kugenzura konti. Ongera ugerageze.', true);
             }
         }
 
         function showAuthMessage(message, isError = false) {
             const el = document.getElementById('authMessage');
-            if (!el) return;
-            el.textContent = message || '';
-            el.className = 'text-sm text-center mt-4 ' +
-                (isError ? 'text-red-500' : 'text-blue-500');
+            if (el) {
+                el.textContent = message;
+                el.className = 'text-sm text-center mt-4 ' + (isError ? 'text-red-500' : 'text-blue-500');
+            }
         }
 
         function setAuthMode(mode) {
-            if (mode !== 'login' && mode !== 'signup') return;
             currentAuthMode = mode;
             const signup = mode === 'signup';
-            const nameField = document.getElementById('nameField');
-            const authName = document.getElementById('authName');
-            const authPassword = document.getElementById('authPassword');
-            const submitButton = document.getElementById('authSubmitBtn');
-            const loginTab = document.getElementById('loginTab');
-            const signupTab = document.getElementById('signupTab');
-
-            if (nameField) {
-                nameField.classList.toggle('hidden', !signup);
-                nameField.style.display = signup ? 'block' : 'none';
-            }
-            if (authName) authName.required = signup;
-            if (authPassword) authPassword.autocomplete = signup ? 'new-password' : 'current-password';
-            if (submitButton && !authBusy) {
-                submitButton.textContent = signup ? 'Create Account 🚀' : 'Login 🔓';
-            }
-            if (loginTab) {
-                loginTab.className = signup
-                    ? 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold'
-                    : 'py-2 rounded-lg bg-blue-600 text-white font-semibold';
-            }
-            if (signupTab) {
-                signupTab.className = signup
-                    ? 'py-2 rounded-lg bg-blue-600 text-white font-semibold'
-                    : 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold';
-            }
+            document.getElementById('nameField').classList.toggle('hidden', !signup);
+            document.getElementById('nameField').style.display = signup ? 'block' : 'none';
+            document.getElementById('authName').required = signup;
+            document.getElementById('authPassword').autocomplete = signup ? 'new-password' : 'current-password';
+            document.getElementById('authSubmitBtn').textContent = signup ? 'Create Account 🚀' : 'Login 🔓';
+            document.getElementById('loginTab').className = signup
+                ? 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold'
+                : 'py-2 rounded-lg bg-blue-600 text-white font-semibold';
+            document.getElementById('signupTab').className = signup
+                ? 'py-2 rounded-lg bg-blue-600 text-white font-semibold'
+                : 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold';
             showAuthMessage('');
         }
 
         async function submitEmailAuth(event) {
-            if (event) event.preventDefault();
-            if (authBusy) return;
+            event.preventDefault();
 
-            const email = (document.getElementById('authEmail')?.value || '').trim();
-            const password = document.getElementById('authPassword')?.value || '';
-            const fullName = (document.getElementById('authName')?.value || '').trim();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const fullName = document.getElementById('authName').value.trim();
             const button = document.getElementById('authSubmitBtn');
 
             if (!email || !password) {
@@ -674,7 +662,7 @@ async def chat_ui():
             }
             if (currentAuthMode === 'signup' && !fullName) {
                 showAuthMessage('Andika amazina yawe mbere yo gufungura konti.', true);
-                document.getElementById('authName')?.focus();
+                document.getElementById('authName').focus();
                 return;
             }
             if (password.length < 6) {
@@ -682,24 +670,19 @@ async def chat_ui():
                 return;
             }
 
-            authBusy = true;
-            if (button) {
-                button.disabled = true;
-                button.textContent = 'Please wait...';
-            }
+            button.disabled = true;
+            button.textContent = 'Please wait...';
             showAuthMessage('Turimo kugenzura amakuru yawe...');
 
             try {
                 const endpoint = currentAuthMode === 'signup'
                     ? '/api/auth/signup'
                     : '/api/auth/login';
+
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    credentials: 'include',
                     cache: 'no-store',
                     body: JSON.stringify({
                         email: email,
@@ -715,93 +698,74 @@ async def chat_ui():
                 } catch (_) {
                     throw new Error('Server yagaruye igisubizo kitumvikana. Reba logs za hosting.');
                 }
+
                 if (!response.ok) {
-                    throw new Error(data.detail || data.message || ('HTTP ' + response.status));
+                    const detail = data.detail || data.message || ('HTTP ' + response.status);
+                    throw new Error(detail);
                 }
 
-                // Reba ko session cookie yakiriwe na server mbere yo gufungura AI.
+                // Confirm the session cookie was saved before opening the AI chat.
                 const check = await fetch('/api/auth/me', {
                     method: 'GET',
-                    credentials: 'same-origin',
+                    credentials: 'include',
                     cache: 'no-store',
                     headers: { 'Accept': 'application/json' }
                 });
                 const session = await check.json();
+
                 if (!check.ok || !session.authenticated || !session.user) {
-                    throw new Error('Konti yakozwe ariko session ntiyabitswe. Reba HTTPS/cookie settings za hosting.');
+                    throw new Error('Konti yako yakozwe, ariko session ntiyabitswe. Reba cookie/HTTPS settings za hosting.');
                 }
 
                 currentUser = session.user;
                 guestMode = false;
                 enterChat(currentUser.full_name || currentUser.email);
-                const form = document.getElementById('authForm');
-                if (form) form.reset();
             } catch (error) {
                 console.error('Authentication error:', error);
-                showAuthMessage(error.message || 'Ntibyashobotse kwinjira. Reba internet cyangwa server yawe.', true);
+                showAuthMessage(
+                    error.message || 'Ntibyashobotse kwinjira. Reba internet cyangwa server yawe.',
+                    true
+                );
             } finally {
-                authBusy = false;
-                if (button) {
-                    button.disabled = false;
-                    button.textContent = currentAuthMode === 'signup'
-                        ? 'Create Account 🚀'
-                        : 'Login 🔓';
-                }
+                button.disabled = false;
+                button.textContent = currentAuthMode === 'signup'
+                    ? 'Create Account 🚀'
+                    : 'Login 🔓';
             }
         }
 
         function continueAsGuest() {
-            if (authBusy) return;
             guestMode = true;
             currentUser = null;
             enterChat('Guest');
         }
 
         function enterChat(label) {
-            const authScreen = document.getElementById('authScreen');
-            if (authScreen) {
-                authScreen.classList.add('hidden');
-                authScreen.style.display = 'none';
-            }
-            const userDisplay = document.getElementById('userDisplay');
-            if (userDisplay) userDisplay.textContent = '👤 ' + label;
-            const logoutButton = document.getElementById('logoutBtnText');
-            if (logoutButton) logoutButton.textContent = 'Logout';
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('userDisplay').textContent = '👤 ' + label;
+            document.getElementById('logoutBtnText').textContent = 'Logout';
         }
 
         async function logout() {
-            if (authBusy) return;
             try {
                 if (currentUser) {
-                    const response = await fetch('/api/auth/logout', {
+                    await fetch('/api/auth/logout', {
                         method: 'POST',
-                        credentials: 'same-origin',
-                        headers: { 'Accept': 'application/json' }
+                        credentials: 'same-origin'
                     });
-                    if (!response.ok) {
-                        throw new Error('Server ntiyashoboye gusohora konti. Ongera ugerageze.');
-                    }
                 }
             } catch (error) {
                 console.error('Logout error:', error);
-                showAuthMessage(error.message || 'Ntibyashobotse gusohoka kuri konti.', true);
-                return;
             }
-
             currentUser = null;
             guestMode = false;
-            const authScreen = document.getElementById('authScreen');
-            if (authScreen) {
-                authScreen.classList.remove('hidden');
-                authScreen.style.display = 'flex';
-            }
-            const userDisplay = document.getElementById('userDisplay');
-            if (userDisplay) userDisplay.textContent = '👤 Guest';
-            const form = document.getElementById('authForm');
-            if (form) form.reset();
-            const chat = document.getElementById('chatContainer');
-            if (chat) chat.innerHTML = '';
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('userDisplay').textContent = '👤 Guest';
+            document.getElementById('authForm').reset();
             setAuthMode('login');
+            document.getElementById('chatContainer').innerHTML = '';
         }
 
         const translationsData = {
@@ -958,10 +922,40 @@ async def chat_ui():
             });
         }
 
-        async function typeText(element, text, speed = 0) {
-            // Render structured Markdown like ChatGPT/Gemini instead of showing raw **markers**.
-            renderAIResponse(element, text);
+        async function typeText(element, text, speed = 22) {
+            // Type plain text first; render Markdown/HTML only once at the end.
+            // This prevents the response layout from jumping or breaking per character.
+            const fullText = String(text || '');
             const chat = document.getElementById('chatContainer');
+
+            if (!fullText) {
+                renderAIResponse(element, '');
+                return;
+            }
+
+            element.classList.add('typing-response');
+            element.textContent = '';
+
+            const requestedSpeed = Number(speed) || 35;
+            const characterDelay = Math.max(18, Math.min(requestedSpeed, 45));
+
+            for (let position = 1; position <= fullText.length; position++) {
+                element.textContent = fullText.slice(0, position);
+                chat.scrollTop = chat.scrollHeight;
+
+                const currentChar = fullText[position - 1];
+                let delay = characterDelay + Math.random() * 12;
+
+                if (/[.!?]/.test(currentChar)) delay += 260;
+                else if (/[,;:]/.test(currentChar)) delay += 120;
+                else if (currentChar === '\\n') delay += 150;
+                else if (currentChar === ' ') delay += 5;
+
+                await wait(delay);
+            }
+
+            element.classList.remove('typing-response');
+            renderAIResponse(element, fullText);
             chat.scrollTop = chat.scrollHeight;
         }
 
