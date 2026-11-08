@@ -583,51 +583,89 @@ async def chat_ui():
         let currentAuthMode = 'login';
         let currentUser = null;
         let guestMode = false;
+        let authBusy = false;
 
         async function initializeAuthentication() {
+            const authScreen = document.getElementById('authScreen');
             try {
-                const response = await fetch('/api/auth/me', { credentials: 'same-origin' });
+                const response = await fetch('/api/auth/me', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
                 const data = await response.json();
-                if (data.authenticated && data.user) {
+
+                if (response.ok && data.authenticated && data.user) {
                     currentUser = data.user;
+                    guestMode = false;
                     enterChat(currentUser.full_name || currentUser.email);
+                } else {
+                    currentUser = null;
+                    if (authScreen) {
+                        authScreen.classList.remove('hidden');
+                        authScreen.style.display = 'flex';
+                    }
+                    setAuthMode('login');
                 }
             } catch (error) {
-                showAuthMessage('Ntibishobotse kugenzura konti. Ongera ugerageze.', true);
+                console.error('Session check error:', error);
+                if (authScreen) {
+                    authScreen.classList.remove('hidden');
+                    authScreen.style.display = 'flex';
+                }
+                showAuthMessage('Ntibishobotse kugenzura konti. Ushobora kongera kugerageza cyangwa ugakomeza nka Guest.', true);
             }
         }
 
         function showAuthMessage(message, isError = false) {
             const el = document.getElementById('authMessage');
-            if (el) {
-                el.textContent = message;
-                el.className = 'text-sm text-center mt-4 ' + (isError ? 'text-red-500' : 'text-blue-500');
-            }
+            if (!el) return;
+            el.textContent = message || '';
+            el.className = 'text-sm text-center mt-4 ' +
+                (isError ? 'text-red-500' : 'text-blue-500');
         }
 
         function setAuthMode(mode) {
+            if (mode !== 'login' && mode !== 'signup') return;
             currentAuthMode = mode;
             const signup = mode === 'signup';
-            document.getElementById('nameField').classList.toggle('hidden', !signup);
-            document.getElementById('nameField').style.display = signup ? 'block' : 'none';
-            document.getElementById('authName').required = signup;
-            document.getElementById('authPassword').autocomplete = signup ? 'new-password' : 'current-password';
-            document.getElementById('authSubmitBtn').textContent = signup ? 'Create Account 🚀' : 'Login 🔓';
-            document.getElementById('loginTab').className = signup
-                ? 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold'
-                : 'py-2 rounded-lg bg-blue-600 text-white font-semibold';
-            document.getElementById('signupTab').className = signup
-                ? 'py-2 rounded-lg bg-blue-600 text-white font-semibold'
-                : 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold';
+            const nameField = document.getElementById('nameField');
+            const authName = document.getElementById('authName');
+            const authPassword = document.getElementById('authPassword');
+            const submitButton = document.getElementById('authSubmitBtn');
+            const loginTab = document.getElementById('loginTab');
+            const signupTab = document.getElementById('signupTab');
+
+            if (nameField) {
+                nameField.classList.toggle('hidden', !signup);
+                nameField.style.display = signup ? 'block' : 'none';
+            }
+            if (authName) authName.required = signup;
+            if (authPassword) authPassword.autocomplete = signup ? 'new-password' : 'current-password';
+            if (submitButton && !authBusy) {
+                submitButton.textContent = signup ? 'Create Account 🚀' : 'Login 🔓';
+            }
+            if (loginTab) {
+                loginTab.className = signup
+                    ? 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold'
+                    : 'py-2 rounded-lg bg-blue-600 text-white font-semibold';
+            }
+            if (signupTab) {
+                signupTab.className = signup
+                    ? 'py-2 rounded-lg bg-blue-600 text-white font-semibold'
+                    : 'py-2 rounded-lg text-gray-600 dark:text-gray-300 font-semibold';
+            }
             showAuthMessage('');
         }
 
         async function submitEmailAuth(event) {
-            event.preventDefault();
+            if (event) event.preventDefault();
+            if (authBusy) return;
 
-            const email = document.getElementById('authEmail').value.trim();
-            const password = document.getElementById('authPassword').value;
-            const fullName = document.getElementById('authName').value.trim();
+            const email = (document.getElementById('authEmail')?.value || '').trim();
+            const password = document.getElementById('authPassword')?.value || '';
+            const fullName = (document.getElementById('authName')?.value || '').trim();
             const button = document.getElementById('authSubmitBtn');
 
             if (!email || !password) {
@@ -636,7 +674,7 @@ async def chat_ui():
             }
             if (currentAuthMode === 'signup' && !fullName) {
                 showAuthMessage('Andika amazina yawe mbere yo gufungura konti.', true);
-                document.getElementById('authName').focus();
+                document.getElementById('authName')?.focus();
                 return;
             }
             if (password.length < 6) {
@@ -644,19 +682,24 @@ async def chat_ui():
                 return;
             }
 
-            button.disabled = true;
-            button.textContent = 'Please wait...';
+            authBusy = true;
+            if (button) {
+                button.disabled = true;
+                button.textContent = 'Please wait...';
+            }
             showAuthMessage('Turimo kugenzura amakuru yawe...');
 
             try {
                 const endpoint = currentAuthMode === 'signup'
                     ? '/api/auth/signup'
                     : '/api/auth/login';
-
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin',
                     cache: 'no-store',
                     body: JSON.stringify({
                         email: email,
@@ -672,74 +715,93 @@ async def chat_ui():
                 } catch (_) {
                     throw new Error('Server yagaruye igisubizo kitumvikana. Reba logs za hosting.');
                 }
-
                 if (!response.ok) {
-                    const detail = data.detail || data.message || ('HTTP ' + response.status);
-                    throw new Error(detail);
+                    throw new Error(data.detail || data.message || ('HTTP ' + response.status));
                 }
 
-                // Confirm the session cookie was saved before opening the AI chat.
+                // Reba ko session cookie yakiriwe na server mbere yo gufungura AI.
                 const check = await fetch('/api/auth/me', {
                     method: 'GET',
-                    credentials: 'include',
+                    credentials: 'same-origin',
                     cache: 'no-store',
                     headers: { 'Accept': 'application/json' }
                 });
                 const session = await check.json();
-
                 if (!check.ok || !session.authenticated || !session.user) {
-                    throw new Error('Konti yako yakozwe, ariko session ntiyabitswe. Reba cookie/HTTPS settings za hosting.');
+                    throw new Error('Konti yakozwe ariko session ntiyabitswe. Reba HTTPS/cookie settings za hosting.');
                 }
 
                 currentUser = session.user;
                 guestMode = false;
                 enterChat(currentUser.full_name || currentUser.email);
+                const form = document.getElementById('authForm');
+                if (form) form.reset();
             } catch (error) {
                 console.error('Authentication error:', error);
-                showAuthMessage(
-                    error.message || 'Ntibyashobotse kwinjira. Reba internet cyangwa server yawe.',
-                    true
-                );
+                showAuthMessage(error.message || 'Ntibyashobotse kwinjira. Reba internet cyangwa server yawe.', true);
             } finally {
-                button.disabled = false;
-                button.textContent = currentAuthMode === 'signup'
-                    ? 'Create Account 🚀'
-                    : 'Login 🔓';
+                authBusy = false;
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = currentAuthMode === 'signup'
+                        ? 'Create Account 🚀'
+                        : 'Login 🔓';
+                }
             }
         }
 
         function continueAsGuest() {
+            if (authBusy) return;
             guestMode = true;
             currentUser = null;
             enterChat('Guest');
         }
 
         function enterChat(label) {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('userDisplay').textContent = '👤 ' + label;
-            document.getElementById('logoutBtnText').textContent = 'Logout';
+            const authScreen = document.getElementById('authScreen');
+            if (authScreen) {
+                authScreen.classList.add('hidden');
+                authScreen.style.display = 'none';
+            }
+            const userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = '👤 ' + label;
+            const logoutButton = document.getElementById('logoutBtnText');
+            if (logoutButton) logoutButton.textContent = 'Logout';
         }
 
         async function logout() {
+            if (authBusy) return;
             try {
                 if (currentUser) {
-                    await fetch('/api/auth/logout', {
+                    const response = await fetch('/api/auth/logout', {
                         method: 'POST',
-                        credentials: 'same-origin'
+                        credentials: 'same-origin',
+                        headers: { 'Accept': 'application/json' }
                     });
+                    if (!response.ok) {
+                        throw new Error('Server ntiyashoboye gusohora konti. Ongera ugerageze.');
+                    }
                 }
             } catch (error) {
                 console.error('Logout error:', error);
+                showAuthMessage(error.message || 'Ntibyashobotse gusohoka kuri konti.', true);
+                return;
             }
+
             currentUser = null;
             guestMode = false;
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('authScreen').style.display = 'flex';
-            document.getElementById('userDisplay').textContent = '👤 Guest';
-            document.getElementById('authForm').reset();
+            const authScreen = document.getElementById('authScreen');
+            if (authScreen) {
+                authScreen.classList.remove('hidden');
+                authScreen.style.display = 'flex';
+            }
+            const userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = '👤 Guest';
+            const form = document.getElementById('authForm');
+            if (form) form.reset();
+            const chat = document.getElementById('chatContainer');
+            if (chat) chat.innerHTML = '';
             setAuthMode('login');
-            document.getElementById('chatContainer').innerHTML = '';
         }
 
         const translationsData = {
@@ -896,35 +958,10 @@ async def chat_ui():
             });
         }
 
-        async function typeText(element, text, speed = 22) {
-            // Type one character at a time, with natural pauses like human typing.
-            const fullText = String(text || '');
+        async function typeText(element, text, speed = 0) {
+            // Render structured Markdown like ChatGPT/Gemini instead of showing raw **markers**.
+            renderAIResponse(element, text);
             const chat = document.getElementById('chatContainer');
-
-            if (!fullText) {
-                renderAIResponse(element, '');
-                return;
-            }
-
-            const requestedSpeed = Number(speed) || 35;
-            const characterDelay = Math.max(25, Math.min(requestedSpeed, 55));
-
-            for (let position = 1; position <= fullText.length; position++) {
-                renderAIResponse(element, fullText.slice(0, position));
-                chat.scrollTop = chat.scrollHeight;
-
-                const currentChar = fullText[position - 1];
-                let delay = characterDelay + Math.random() * 18;
-
-                if (/[.!?]/.test(currentChar)) delay += 350;
-                else if (/[,;:]/.test(currentChar)) delay += 180;
-                else if (currentChar === '\n') delay += 220;
-                else if (currentChar === ' ') delay += 12;
-
-                await wait(delay);
-            }
-
-            renderAIResponse(element, fullText);
             chat.scrollTop = chat.scrollHeight;
         }
 
