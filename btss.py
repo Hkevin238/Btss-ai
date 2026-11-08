@@ -404,7 +404,8 @@ async def chat_ui():
         #authScreen.hidden { display: none !important; }
         #authScreen > div { width: 100%; max-width: 28rem; margin: auto; padding: 1.75rem; border-radius: 1.25rem; background: #18191a; color: #f8fafc; }
         #authScreen input { width: 100%; box-sizing: border-box; padding: .8rem; border-radius: .7rem; color: #111827; background: #f9fafb; }
-        #authScreen button { min-height: 42px; }
+        #authScreen button { min-height: 42px; position: relative; z-index: 10001; pointer-events: auto; }
+        #authScreen #loginTab, #authScreen #signupTab { cursor: pointer; touch-action: manipulation; }
         @keyframes bounceSlow {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-6px); }
@@ -1117,11 +1118,33 @@ async def chat_ui():
                 alert('Connection error occurred.');
             }
         }
+        // Expose the mode switch globally for the tab controls.
+        window.setAuthMode = setAuthMode;
+
         document.addEventListener('DOMContentLoaded', () => {
             const authScreen = document.getElementById('authScreen');
             if (authScreen && !authScreen.classList.contains('hidden')) authScreen.style.display = 'flex';
+
+            const loginTab = document.getElementById('loginTab');
+            const signupTab = document.getElementById('signupTab');
             const nameField = document.getElementById('nameField');
+
+            // Bind real click handlers so switching tabs does not depend on inline HTML handlers.
+            if (loginTab) {
+                loginTab.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    setAuthMode('login');
+                });
+            }
+            if (signupTab) {
+                signupTab.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    setAuthMode('signup');
+                });
+            }
+
             if (nameField && currentAuthMode !== 'signup') nameField.style.display = 'none';
+            setAuthMode('login');
             initializeAuthentication();
         });
     </script>
