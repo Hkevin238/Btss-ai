@@ -963,7 +963,7 @@ async def chat_ui():
 
                 if (/[.!?]/.test(currentChar)) delay += 260;
                 else if (/[,;:]/.test(currentChar)) delay += 120;
-                else if (currentChar === '\n') delay += 150;
+                else if (currentChar === '\\n') delay += 150;
                 else if (currentChar === ' ') delay += 5;
 
                 await wait(delay);
