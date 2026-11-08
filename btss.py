@@ -923,8 +923,6 @@ async def chat_ui():
         }
 
         async function typeText(element, text, speed = 22) {
-            // Type plain text first; render Markdown/HTML only once at the end.
-            // This prevents the response layout from jumping or breaking per character.
             const fullText = String(text || '');
             const chat = document.getElementById('chatContainer');
 
@@ -933,28 +931,35 @@ async def chat_ui():
                 return;
             }
 
+            // Render HTML/Markdown first and type only readable text.
+            const preview = document.createElement('div');
+            renderAIResponse(preview, fullText);
+            const typingText = preview.innerText || preview.textContent || '';
+
             element.classList.add('typing-response');
             element.textContent = '';
 
             const requestedSpeed = Number(speed) || 35;
             const characterDelay = Math.max(18, Math.min(requestedSpeed, 45));
 
-            for (let position = 1; position <= fullText.length; position++) {
-                element.textContent = fullText.slice(0, position);
+            for (let position = 1; position <= typingText.length; position++) {
+                element.textContent = typingText.slice(0, position);
                 chat.scrollTop = chat.scrollHeight;
 
-                const currentChar = fullText[position - 1];
+                const currentChar = typingText[position - 1];
                 let delay = characterDelay + Math.random() * 12;
 
                 if (/[.!?]/.test(currentChar)) delay += 260;
                 else if (/[,;:]/.test(currentChar)) delay += 120;
-                else if (currentChar === '\\n') delay += 150;
+                else if (currentChar === '\n') delay += 150;
                 else if (currentChar === ' ') delay += 5;
 
                 await wait(delay);
             }
 
             element.classList.remove('typing-response');
+
+            // Restore the complete formatted response after typing.
             renderAIResponse(element, fullText);
             chat.scrollTop = chat.scrollHeight;
         }
