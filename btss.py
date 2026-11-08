@@ -13,7 +13,7 @@ import hmac
 import secrets
 from datetime import datetime, timedelta, timezone
 
-app = FastAPI(title="BULINGA TSS AI")
+app = FastAPI(title="BULINGA AI")
 
 # Guha uburenganzira bwo gusoma amafoto n'izindi dosiye biri muri folder imwe
 app.mount("/static", StaticFiles(directory="."), name="static")
@@ -123,7 +123,7 @@ initialize_auth_database()
 # =========================================================
 translations = {
     "Kinyarwanda": {
-        "login_title": "BULINGA TSS AI 🏫",
+        "login_title": "BULINGA  AI 🏫",
         "login_desc": "Nyamuneka Injira, Iyandikishe, cyangwa Ukomeze nka Guest 🔐",
         "user_label": "Izina ry'ukoresha (Username)",
         "pass_label": "Ijambo ry'ibanga (Password)",
@@ -148,7 +148,7 @@ translations = {
         "dev_btn": "👨‍💻 Reba kuri Developer Kevin"
     },
     "English": {
-        "login_title": "BULINGA TSS AI 🏫",
+        "login_title": "BULINGA AI 🏫",
         "login_desc": "Please Login, Sign Up, or Continue as Guest 🔐",
         "user_label": "Username",
         "pass_label": "Password",
@@ -173,7 +173,7 @@ translations = {
         "dev_btn": "👨‍💻 View About Developer Kevin"
     },
     "Français": {
-        "login_title": "BULINGA TSS AI 🏫",
+        "login_title": "BULINGA AI 🏫",
         "login_desc": "Veuillez vous connecter, vous inscrire ou continuer en tant qu'invité 🔐",
         "user_label": "Nom d'utilisateur",
         "pass_label": "Mot de passe",
@@ -198,7 +198,7 @@ translations = {
         "dev_btn": "👨‍💻 Voir À propos de Developer Kevin"
     },
     "Kiswahili": {
-        "login_title": "BULINGA TSS AI 🏫",
+        "login_title": "BULINGA AI 🏫",
         "login_desc": "Tafadhali Ingia, Jisajili, au Endelea kama Mgeni 🔐",
         "user_label": "Jina la mtumiaji",
         "pass_label": "Nenosiri",
@@ -265,6 +265,10 @@ Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Em
 -You must generate , create the attractive clickable google map link of Bulinga which include these(https://www.google.com/maps/place/Bulinga/@-1.995589,29.703555,758m/data=!3m2!1e3!4b1!4m6!3m5!1s0x19dcc6049eb61033:0x981c134ac3a66bfd!8m2!3d-1.9969026!4d29.7064051!16s%2Fg%2F1tkzjh6d?entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D) and then Type , write on it this word : See Location of Bulinga on Google map.
 -When a user asks for the Google Maps link or location of BULINGA TSS, always provide this exact clickable link: <a href="https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3291m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #4dabf7; text-decoration: underline;">Kanda Hano kugirango urebe aho ishuri riherereye</a>.
 -if someone ask , Camera man , photographer, image capturer, or someone related with images,photos , etc , You must output, response , answer this: ERIC Dushimimana and his Email:dushimimanaeric075@gmail.com(for more info),this is who is Professional at image preparation, and other related
+-You must give , provide a related link when someone asks you to give an info you don't have , at this time you must provide the redirection link from the internet to help that someone to get the info they want.
+-You must Generate , Create an image if someone asks you to build ,generate , make a photo while based on his wish and wants.
+-If someone ask a photo related Bulinga TSS , Bulinga Technical Secondary School ; You must use this Github repository:Hkevin238/Btss-ai, and then search , find , scan one of the more image(.JPG, .PNG ,.JPEG , .TIFF ,.GIF .) etc about bulinga tss.
+-Please , Don't disable , refuse for someone who's ask you the data , info you don't have , while create and scan , search on the web the website or where that data wants is , and then give , provide it later as Clickable LINK to redirect she , he there.
 
 RESPONSE QUALITY AND NATURAL WRITING RULES:
 - Write like a clear, knowledgeable human assistant having a normal conversation.
