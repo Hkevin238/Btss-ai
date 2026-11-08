@@ -901,6 +901,17 @@ async def chat_ui():
             });
         }
 
+        function removeVisibleHtmlTags(element) {
+            const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+            const textNodes = [];
+            while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+            textNodes.forEach(node => {
+                // Remove HTML-looking tags when they appear as literal text.
+                node.nodeValue = node.nodeValue.replace(/<\/?[a-z][a-z0-9:-]*(?:\s+[^<>]*?)?\s*\/?>/gi, '');
+            });
+        }
+
         function renderAIResponse(element, responseText) {
             const raw = String(responseText || '');
             let html;
@@ -913,6 +924,7 @@ async def chat_ui():
             element.innerHTML = window.DOMPurify
                 ? window.DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'rel', 'style'] })
                 : html;
+            removeVisibleHtmlTags(element);
             linkifyResponse(element);
             element.querySelectorAll('a').forEach(a => {
                 a.style.color = '#3b9cff';
