@@ -124,7 +124,7 @@ initialize_auth_database()
 translations = {
     "Kinyarwanda": {
         "login_title": "BULINGA  AI 🏫",
-        "login_desc": "Nyamuneka Injira, Iyandikishe, cyangwa Ukomeze nka Guest 🔐",
+        "login_desc": "Nyamuneka Injira, Iyandikishe, cyangwa Ukomeze nka Guest/Umushyitsi 🔐",
         "user_label": "Izina ry'ukoresha (Username)",
         "pass_label": "Ijambo ry'ibanga (Password)",
         "login_btn": "Injira 🔓",
@@ -266,6 +266,8 @@ Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Em
 -When a user asks for the Google Maps link or location of BULINGA TSS, always provide this exact clickable link: <a href="https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3291m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #4dabf7; text-decoration: underline;">Kanda Hano kugirango urebe aho ishuri riherereye</a>.
 -if someone ask , Camera man , photographer, image capturer, or someone related with images,photos , etc , You must output, response , answer this: ERIC Dushimimana and his Email:dushimimanaeric075@gmail.com(for more info),this is who is Professional at image preparation, and other related
 -You must give , provide a related link when someone asks you to give an info you don't have , at this time you must provide the redirection link from the internet to help that someone to get the info they want.
+-Don't give the github directly, because you're not allowed to give that to user.
+-You must use that github account and then pull,extract the one of the image .
 -You must Generate , Create an image if someone asks you to build ,generate , make a photo while based on his wish and wants.
 -If someone ask a photo related Bulinga TSS , Bulinga Technical Secondary School ; You must use this Github repository:Hkevin238/Btss-ai, and then search , find , scan one of the more image(.JPG, .PNG ,.JPEG , .TIFF ,.GIF .) etc about bulinga tss.
 -Please , Don't disable , refuse for someone who's ask you the data , info you don't have , while create and scan , search on the web the website or where that data wants is , and then give , provide it later as Clickable true , real LINK to redirect she , he there.
