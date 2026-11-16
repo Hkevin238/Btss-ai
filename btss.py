@@ -6,6 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from groq import Groq
 import urllib.parse
+import urllib.request
+import json
 import random
 import sqlite3
 import hashlib
@@ -1158,6 +1160,75 @@ async def chat_ui():
 </html>
     """
 
+def find_bulinga_repository_images():
+    """
+    Shakisha amafoto ari muri repository Hkevin238/Btss-ai.
+    Igarura direct raw URLs kugira ngo frontend iyerekane.
+    """
+    repository = "Hkevin238/Btss-ai"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "BULINGA-AI-Image-Finder"
+    }
+
+    try:
+        repo_request = urllib.request.Request(
+            f"https://api.github.com/repos/{repository}",
+            headers=headers
+        )
+        with urllib.request.urlopen(repo_request, timeout=15) as response:
+            repo_data = json.loads(response.read().decode("utf-8"))
+
+        branch = repo_data.get("default_branch", "main")
+        tree_request = urllib.request.Request(
+            f"https://api.github.com/repos/{repository}/git/trees/{urllib.parse.quote(branch, safe='')}?recursive=1",
+            headers=headers
+        )
+        with urllib.request.urlopen(tree_request, timeout=20) as response:
+            tree_data = json.loads(response.read().decode("utf-8"))
+
+        image_extensions = (".jpg", ".jpeg", ".png", ".gif", ".tiff", ".tif", ".webp")
+        image_files = [
+            item for item in tree_data.get("tree", [])
+            if item.get("type") == "blob"
+            and item.get("path", "").lower().endswith(image_extensions)
+        ]
+
+        # Shyira imbere amafoto afite amazina agaragaza ishuri.
+        school_terms = ("bulinga", "btss", "tss", "tvet", "school", "ishuri")
+        image_files.sort(
+            key=lambda item: (
+                not any(term in item.get("path", "").lower() for term in school_terms),
+                item.get("path", "").lower()
+            )
+        )
+
+        return [
+            "https://raw.githubusercontent.com/"
+            f"{repository}/{urllib.parse.quote(branch, safe='')}/"
+            f"{urllib.parse.quote(item['path'], safe='/')}"
+            for item in image_files[:6]
+        ]
+    except Exception as error:
+        print(f"BULINGA GITHUB IMAGE SEARCH ERROR: {error}")
+        return []
+
+
+def is_bulinga_photo_request(query: str) -> bool:
+    text = (query or "").lower()
+    photo_terms = (
+        "foto", "amafoto", "ifoto", "photo", "photos", "picture",
+        "pictures", "image", "images", "picha", "onyesha"
+    )
+    school_terms = (
+        "bulinga", "btss", "tss", "tvet", "school", "ishuri", "ikigo"
+    )
+    return (
+        any(term in text for term in photo_terms)
+        and any(term in text for term in school_terms)
+    )
+
+
 @app.post("/api/chat")
 async def chat_endpoint(
     query: str = Form(...),
@@ -1165,19 +1236,37 @@ async def chat_endpoint(
     file: UploadFile = File(None)
 ):
     try:
+        local_images = []
+        if is_bulinga_photo_request(query):
+            local_images = find_bulinga_repository_images()
+
         completion = client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": BULINGA_INFO},
-                {"role": "user", "content": f"Respond in {response_lang}. User query: {query}"}
+                {
+                    "role": "user",
+                    "content": (
+                        f"Respond in {response_lang}. User query: {query}\n"
+                        f"Repository image search result: "
+                        f"{len(local_images)} image(s) found in Hkevin238/Btss-ai. "
+                        "The application will display these images separately."
+                    )
+                }
             ],
             temperature=0.7
         )
         ai_response = completion.choices[0].message.content
 
+        if is_bulinga_photo_request(query) and not local_images:
+            ai_response += (
+                "\n\nNtabwo nabonye amafoto muri repository ya BTSS kuri ubu. "
+                "Ongera ugerageze nyuma."
+            )
+
         return JSONResponse({
             "response": ai_response,
-            "local_images": [],
+            "local_images": local_images,
             "generated_img": None
         })
     except Exception as e:
