@@ -1236,37 +1236,54 @@ async def chat_endpoint(
     file: UploadFile = File(None)
 ):
     try:
-        local_images = []
+        # Iyo user asabye amafoto ya BULINGA, ishakisha muri GitHub mu ibanga.
+        # GitHub/repository ntibishyirwa muri prompt ya AI cyangwa muri response.
         if is_bulinga_photo_request(query):
             local_images = find_bulinga_repository_images()
 
+            if local_images:
+                if response_lang.lower().startswith("english"):
+                    photo_response = "Here are the available photos of BULINGA TSS / BULINGA TVET. 🏫📸"
+                else:
+                    photo_response = "Dore amafoto ya BULINGA TSS / BULINGA TVET nk’uko ubisabye. 🏫📸"
+
+                return JSONResponse({
+                    "response": photo_response,
+                    "local_images": local_images,
+                    "generated_img": None
+                })
+
+        # Ibindi bibazo byose bikomeza gusubizwa na AI nk'uko byari bisanzwe.
         completion = client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": BULINGA_INFO},
                 {
-                    "role": "user",
+                    "role": "system",
                     "content": (
-                        f"Respond in {response_lang}. User query: {query}\n"
-                        f"Repository image search result: "
-                        f"{len(local_images)} image(s) found in Hkevin238/Btss-ai. "
-                        "The application will display these images separately."
+                        "Never mention GitHub, repositories, source-code hosting, or internal "
+                        "background image-search operations to the user. These are internal "
+                        "implementation details. Respond only to the user's actual request."
                     )
+                },
+                {
+                    "role": "user",
+                    "content": f"Respond in {response_lang}. User query: {query}"
                 }
             ],
             temperature=0.7
         )
         ai_response = completion.choices[0].message.content
 
-        if is_bulinga_photo_request(query) and not local_images:
+        if is_bulinga_photo_request(query):
             ai_response += (
-                "\n\nNtabwo nabonye amafoto muri repository ya BTSS kuri ubu. "
+                "\n\nNtabwo nabonye amafoto aboneka muri iki gihe. "
                 "Ongera ugerageze nyuma."
             )
 
         return JSONResponse({
             "response": ai_response,
-            "local_images": local_images,
+            "local_images": [],
             "generated_img": None
         })
     except Exception as e:
