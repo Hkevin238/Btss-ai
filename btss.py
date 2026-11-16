@@ -1162,52 +1162,78 @@ async def chat_ui():
 
 def find_bulinga_repository_images():
     """
-    Shakisha amafoto ari muri repository Hkevin238/Btss-ai.
-    Igarura direct raw URLs kugira ngo frontend iyerekane.
+    Shakisha amafoto YOSE ari muri repository Hkevin238/Btss-ai.
+    Nta mubare ntarengwa w'amafoto ushyizweho; agarurwa nka direct image URLs.
     """
     repository = "Hkevin238/Btss-ai"
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "BULINGA-AI-Image-Finder"
     }
+    image_extensions = (
+        ".jpg", ".jpeg", ".png", ".gif", ".tiff", ".tif",
+        ".webp", ".bmp", ".svg", ".avif", ".ico"
+    )
+
+    def github_json(url):
+        request = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(request, timeout=25) as response:
+            return json.loads(response.read().decode("utf-8"))
 
     try:
-        repo_request = urllib.request.Request(
-            f"https://api.github.com/repos/{repository}",
-            headers=headers
+        repo_data = github_json(
+            f"https://api.github.com/repos/{repository}"
         )
-        with urllib.request.urlopen(repo_request, timeout=15) as response:
-            repo_data = json.loads(response.read().decode("utf-8"))
-
         branch = repo_data.get("default_branch", "main")
-        tree_request = urllib.request.Request(
-            f"https://api.github.com/repos/{repository}/git/trees/{urllib.parse.quote(branch, safe='')}?recursive=1",
-            headers=headers
-        )
-        with urllib.request.urlopen(tree_request, timeout=20) as response:
-            tree_data = json.loads(response.read().decode("utf-8"))
+        encoded_branch = urllib.parse.quote(branch, safe="")
 
-        image_extensions = (".jpg", ".jpeg", ".png", ".gif", ".tiff", ".tif", ".webp")
+        # Banza ukoresha tree API kugira ngo ubone amafoto yo muri folders zose.
+        tree_data = github_json(
+            f"https://api.github.com/repos/{repository}/git/trees/{encoded_branch}?recursive=1"
+        )
         image_files = [
-            item for item in tree_data.get("tree", [])
+            item["path"] for item in tree_data.get("tree", [])
             if item.get("type") == "blob"
             and item.get("path", "").lower().endswith(image_extensions)
         ]
 
-        # Shyira imbere amafoto afite amazina agaragaza ishuri.
+        # Niba GitHub igaruye tree ituzuye (truncated), scan folders zose.
+        if tree_data.get("truncated"):
+            image_files = []
+            folders_to_scan = [""]
+            while folders_to_scan:
+                folder = folders_to_scan.pop()
+                encoded_folder = urllib.parse.quote(folder, safe="/")
+                contents_url = (
+                    f"https://api.github.com/repos/{repository}/contents/{encoded_folder}"
+                    f"?ref={encoded_branch}"
+                )
+                contents = github_json(contents_url)
+                for item in contents if isinstance(contents, list) else []:
+                    if item.get("type") == "dir":
+                        folders_to_scan.append(item.get("path", ""))
+                    elif (
+                        item.get("type") == "file"
+                        and item.get("path", "").lower().endswith(image_extensions)
+                    ):
+                        image_files.append(item["path"])
+
+        # Amafoto afite amazina agaragaza ishuri ashyirwa imbere,
+        # ariko andi mafoto yose yo muri repository na yo aragarurwa.
         school_terms = ("bulinga", "btss", "tss", "tvet", "school", "ishuri")
-        image_files.sort(
-            key=lambda item: (
-                not any(term in item.get("path", "").lower() for term in school_terms),
-                item.get("path", "").lower()
+        image_files = sorted(
+            set(image_files),
+            key=lambda path: (
+                not any(term in path.lower() for term in school_terms),
+                path.lower()
             )
         )
 
         return [
             "https://raw.githubusercontent.com/"
-            f"{repository}/{urllib.parse.quote(branch, safe='')}/"
-            f"{urllib.parse.quote(item['path'], safe='/')}"
-            for item in image_files[:6]
+            f"{repository}/{encoded_branch}/"
+            f"{urllib.parse.quote(path, safe='/')}"
+            for path in image_files
         ]
     except Exception as error:
         print(f"BULINGA GITHUB IMAGE SEARCH ERROR: {error}")
@@ -1218,10 +1244,12 @@ def is_bulinga_photo_request(query: str) -> bool:
     text = (query or "").lower()
     photo_terms = (
         "foto", "amafoto", "ifoto", "photo", "photos", "picture",
-        "pictures", "image", "images", "picha", "onyesha"
+        "pictures", "image", "images", "picha", "amashusho",
+        "shusho", "nyereka", "ndangire", "mwereke", "show me"
     )
     school_terms = (
-        "bulinga", "btss", "tss", "tvet", "school", "ishuri", "ikigo"
+        "bulinga", "btss", "tss", "tvet", "school", "ishuri", "ikigo",
+        "technical secondary", "technical school"
     )
     return (
         any(term in text for term in photo_terms)
