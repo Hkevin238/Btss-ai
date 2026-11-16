@@ -566,9 +566,9 @@ async def chat_ui():
                 🗑️ Clear Chat History
             </button>
 
-            <!-- View About Developer Kevin Button/Link -->
+            <!-- View About Dev Button/Link -->
             <a id="devLinkBtn" href="https://lovable.dev/projects/2d0e0900-16e8-4e8c-90fe-b2df1c0999c2" target="_blank" class="w-full py-2 px-3 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition text-center block">
-                👨‍💻 View About Developer Kevin
+                👨‍💻 View About Dev
             </a>
         </div>
 
