@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, Request, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi import HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -13,6 +13,8 @@ import sqlite3
 import hashlib
 import hmac
 import secrets
+from io import BytesIO
+import mimetypes
 from datetime import datetime, timedelta, timezone
 
 app = FastAPI(title="BULINGA AI")
@@ -1020,6 +1022,22 @@ async def chat_ui():
             changeThemeMode(savedTheme);
         });
 
+        function downloadAIText(contentId) {
+            const responseElement = document.getElementById(contentId);
+            if (!responseElement) return;
+
+            const text = responseElement.innerText || responseElement.textContent || '';
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const objectUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            link.download = 'bulinga-ai-response.txt';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(objectUrl);
+        }
+
         async function sendMessage(e) {
             e.preventDefault();
             const inputField = document.getElementById('userInput');
@@ -1098,9 +1116,48 @@ async def chat_ui():
 
                 let imagesHtml = '';
                 if (data.local_images && data.local_images.length > 0) {
-                    data.local_images.forEach(imgUrl => {
-                        imagesHtml += `<img src="${imgUrl}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Bulinga TSS Photo">`;
+                    data.local_images.forEach((imgUrl, index) => {
+                        const downloadUrl = '/api/download-image?url=' + encodeURIComponent(imgUrl);
+                        imagesHtml += `
+                            <div class="mt-3 flex flex-col gap-2">
+                                <img src="${imgUrl}" loading="lazy"
+                                     class="rounded-xl max-h-80 object-contain shadow-md border border-gray-700/30"
+                                     alt="BULINGA / EDUCARD image ${index + 1}">
+                                <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer"
+                                   class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold">
+                                   Download here
+                                </a>
+                            </div>`;
                     });
+                }
+
+                let audioHtml = '';
+                if (data.audio_url) {
+                    audioHtml = `
+                        <div class="mt-3 flex flex-col gap-2">
+                            <p class="text-sm font-semibold">EDUCARD explanation audio 🎧</p>
+                            <audio controls preload="none" class="w-full max-w-md">
+                                <source src="${data.audio_url}" type="audio/mpeg">
+                                Your browser does not support audio playback.
+                            </audio>
+                            <a href="${data.audio_download_url || data.audio_url}"
+                               class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold">
+                               Download here
+                            </a>
+                        </div>`;
+                }
+
+                let downloadsHtml = '';
+                if (data.downloads && data.downloads.length > 0) {
+                    downloadsHtml = '<div class="mt-3 flex flex-col gap-2">';
+                    data.downloads.forEach(file => {
+                        downloadsHtml += `
+                            <a href="${file.url}" class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold"
+                               download>
+                               ${file.label}
+                            </a>`;
+                    });
+                    downloadsHtml += '</div>';
                 }
 
                 const contentId = 'content-' + Date.now();
@@ -1114,6 +1171,12 @@ async def chat_ui():
                             <div id="${contentId}" class="ai-response-content"></div>
                             ${data.generated_img ? `<img src="${data.generated_img}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Generated Image">` : ''}
                             ${imagesHtml}
+                            ${audioHtml}
+                            ${downloadsHtml}
+                            <button type="button" onclick="downloadAIText('${contentId}')"
+                                class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 text-xs font-semibold mt-2">
+                                Download text (.txt)
+                            </button>
                         </div>
                     </div>`;
                 chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -1160,81 +1223,83 @@ async def chat_ui():
 </html>
     """
 
-def find_bulinga_repository_images():
-    """
-    Shakisha amafoto YOSE ari muri repository Hkevin238/Btss-ai.
-    Nta mubare ntarengwa w'amafoto ushyizweho; agarurwa nka direct image URLs.
-    """
-    repository = "Hkevin238/Btss-ai"
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "User-Agent": "BULINGA-AI-Image-Finder"
-    }
-    image_extensions = (
-        ".jpg", ".jpeg", ".png", ".gif", ".tiff", ".tif",
-        ".webp", ".bmp", ".svg", ".avif", ".ico"
-    )
 
+GITHUB_REPOSITORY = "Hkevin238/Btss-ai"
+GITHUB_HEADERS = {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "BULINGA-TSS-AI"
+}
+IMAGE_EXTENSIONS = (
+    ".jpg", ".jpeg", ".png", ".gif", ".tiff", ".tif",
+    ".webp", ".bmp", ".svg", ".avif", ".ico"
+)
+
+
+def get_bulinga_repository_files():
+    """Scan the complete public Btss-ai repository and return its file paths."""
     def github_json(url):
-        request = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(request, timeout=25) as response:
+        request = urllib.request.Request(url, headers=GITHUB_HEADERS)
+        with urllib.request.urlopen(request, timeout=30) as response:
             return json.loads(response.read().decode("utf-8"))
 
-    try:
-        repo_data = github_json(
-            f"https://api.github.com/repos/{repository}"
-        )
-        branch = repo_data.get("default_branch", "main")
-        encoded_branch = urllib.parse.quote(branch, safe="")
+    repo_data = github_json(
+        f"https://api.github.com/repos/{GITHUB_REPOSITORY}"
+    )
+    branch = repo_data.get("default_branch", "main")
+    encoded_branch = urllib.parse.quote(branch, safe="")
+    tree_data = github_json(
+        f"https://api.github.com/repos/{GITHUB_REPOSITORY}/git/trees/"
+        f"{encoded_branch}?recursive=1"
+    )
 
-        # Banza ukoresha tree API kugira ngo ubone amafoto yo muri folders zose.
-        tree_data = github_json(
-            f"https://api.github.com/repos/{repository}/git/trees/{encoded_branch}?recursive=1"
-        )
-        image_files = [
-            item["path"] for item in tree_data.get("tree", [])
-            if item.get("type") == "blob"
-            and item.get("path", "").lower().endswith(image_extensions)
-        ]
+    paths = [
+        item["path"] for item in tree_data.get("tree", [])
+        if item.get("type") == "blob" and item.get("path")
+    ]
 
-        # Niba GitHub igaruye tree ituzuye (truncated), scan folders zose.
-        if tree_data.get("truncated"):
-            image_files = []
-            folders_to_scan = [""]
-            while folders_to_scan:
-                folder = folders_to_scan.pop()
-                encoded_folder = urllib.parse.quote(folder, safe="/")
-                contents_url = (
-                    f"https://api.github.com/repos/{repository}/contents/{encoded_folder}"
-                    f"?ref={encoded_branch}"
-                )
-                contents = github_json(contents_url)
-                for item in contents if isinstance(contents, list) else []:
-                    if item.get("type") == "dir":
-                        folders_to_scan.append(item.get("path", ""))
-                    elif (
-                        item.get("type") == "file"
-                        and item.get("path", "").lower().endswith(image_extensions)
-                    ):
-                        image_files.append(item["path"])
-
-        # Amafoto afite amazina agaragaza ishuri ashyirwa imbere,
-        # ariko andi mafoto yose yo muri repository na yo aragarurwa.
-        school_terms = ("bulinga", "btss", "tss", "tvet", "school", "ishuri")
-        image_files = sorted(
-            set(image_files),
-            key=lambda path: (
-                not any(term in path.lower() for term in school_terms),
-                path.lower()
+    # Fallback for very large repositories whose recursive tree is truncated.
+    if tree_data.get("truncated"):
+        paths = []
+        folders_to_scan = [""]
+        while folders_to_scan:
+            folder = folders_to_scan.pop()
+            encoded_folder = urllib.parse.quote(folder, safe="/")
+            url = (
+                f"https://api.github.com/repos/{GITHUB_REPOSITORY}/contents/"
+                f"{encoded_folder}?ref={encoded_branch}"
             )
-        )
+            contents = github_json(url)
+            for item in contents if isinstance(contents, list) else []:
+                if item.get("type") == "dir":
+                    folders_to_scan.append(item.get("path", ""))
+                elif item.get("type") == "file" and item.get("path"):
+                    paths.append(item["path"])
 
-        return [
-            "https://raw.githubusercontent.com/"
-            f"{repository}/{encoded_branch}/"
-            f"{urllib.parse.quote(path, safe='/')}"
-            for path in image_files
+    return branch, paths
+
+
+def github_raw_url(branch, path):
+    return (
+        f"https://raw.githubusercontent.com/{GITHUB_REPOSITORY}/"
+        f"{urllib.parse.quote(branch, safe='')}/"
+        f"{urllib.parse.quote(path, safe='/')}"
+    )
+
+
+def find_bulinga_repository_images():
+    """Find school-related images in the repository."""
+    try:
+        branch, paths = get_bulinga_repository_files()
+        image_files = [
+            path for path in paths
+            if path.lower().endswith(IMAGE_EXTENSIONS)
         ]
+        school_terms = ("bulinga", "btss", "tss", "tvet", "school", "ishuri")
+        image_files.sort(key=lambda path: (
+            not any(term in path.lower() for term in school_terms),
+            path.lower()
+        ))
+        return [github_raw_url(branch, path) for path in image_files]
     except Exception as error:
         print(f"BULINGA GITHUB IMAGE SEARCH ERROR: {error}")
         return []
@@ -1245,7 +1310,8 @@ def is_bulinga_photo_request(query: str) -> bool:
     photo_terms = (
         "foto", "amafoto", "ifoto", "photo", "photos", "picture",
         "pictures", "image", "images", "picha", "amashusho",
-        "shusho", "nyereka", "ndangire", "mwereke", "show me"
+        "shusho", "isura", "imigaragarire", "appearance", "look",
+        "nyereka", "ndangire", "mwereke", "show me"
     )
     school_terms = (
         "bulinga", "btss", "tss", "tvet", "school", "ishuri", "ikigo",
@@ -1257,6 +1323,145 @@ def is_bulinga_photo_request(query: str) -> bool:
     )
 
 
+def is_educard_request(query: str) -> bool:
+    text = (query or "").lower()
+    terms = (
+        "educard", "edu card", "education smart card",
+        "smart card", "edcard", "card y'uburezi",
+        "ikarita y'uburezi", "ikarita y'ishuri"
+    )
+    return any(term in text for term in terms)
+
+
+def is_plural_photo_request(query: str) -> bool:
+    text = (query or "").lower()
+    plural_terms = ("amafoto", "photos", "pictures", "images", "picha")
+    return any(term in text for term in plural_terms)
+
+
+def find_educard_repository_assets():
+    """Find card1/card2/... images and the requested EDUCARD files."""
+    try:
+        branch, paths = get_bulinga_repository_files()
+
+        card_images = [
+            path for path in paths
+            if path.lower().endswith(IMAGE_EXTENSIONS)
+            and re.search(r"(^|[/_-])card\d+([_.-]|$)", path.lower())
+        ]
+
+        def card_number(path):
+            match = re.search(r"card(\d+)", path.lower())
+            return int(match.group(1)) if match else 10**9
+
+        card_images.sort(key=lambda path: (card_number(path), path.lower()))
+
+        audio_file = next(
+            (path for path in paths if path.lower().rsplit("/", 1)[-1] == "educard.mp3"),
+            None
+        )
+        presentation_file = next(
+            (path for path in paths if path.lower().rsplit("/", 1)[-1] == "aboutcard.pptx"),
+            None
+        )
+
+        return {
+            "images": [github_raw_url(branch, path) for path in card_images],
+            "audio": github_raw_url(branch, audio_file) if audio_file else None,
+            "audio_download": (
+                "/api/download?path=" + urllib.parse.quote(audio_file, safe="")
+                if audio_file else None
+            ),
+            "downloads": [
+                {
+                    "label": "Download EDUCARD Audio (MP3)",
+                    "path": audio_file
+                } for _ in [0] if audio_file
+            ] + [
+                {
+                    "label": "About EDUCARD (Smart Card)",
+                    "path": presentation_file
+                } for _ in [0] if presentation_file
+            ]
+        }
+    except Exception as error:
+        print(f"EDUCARD GITHUB SEARCH ERROR: {error}")
+        return {"images": [], "downloads": []}
+
+
+@app.get("/api/download")
+async def download_repository_file(path: str):
+    """Download an approved file from the Btss-ai repository."""
+    try:
+        branch, repository_paths = get_bulinga_repository_files()
+        if path not in repository_paths:
+            raise HTTPException(status_code=404, detail="File ntiyabonetse.")
+
+        raw_url = github_raw_url(branch, path)
+        request = urllib.request.Request(raw_url, headers={
+            "User-Agent": "BULINGA-TSS-AI"
+        })
+        with urllib.request.urlopen(request, timeout=45) as response:
+            content = response.read()
+
+        filename = path.rsplit("/", 1)[-1]
+        media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        safe_filename = urllib.parse.quote(filename)
+        return StreamingResponse(
+            BytesIO(content),
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{safe_filename}",
+                "Content-Length": str(len(content)),
+                "Cache-Control": "no-store"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as error:
+        print(f"REPOSITORY DOWNLOAD ERROR: {error}")
+        raise HTTPException(status_code=502, detail="Ntibyashobotse gukuramo iyi file.")
+
+
+
+@app.get("/api/download-image")
+async def download_repository_image(url: str):
+    """Download an image only when its URL belongs to the configured repository."""
+    try:
+        prefix = f"https://raw.githubusercontent.com/{GITHUB_REPOSITORY}/"
+        if not url.startswith(prefix):
+            raise HTTPException(status_code=400, detail="Image URL itemewewe.")
+
+        branch, repository_paths = get_bulinga_repository_files()
+        path = urllib.parse.unquote(url[len(prefix):]).split("/", 1)
+        if len(path) != 2 or path[1] not in repository_paths:
+            raise HTTPException(status_code=404, detail="Image ntiyabonetse.")
+
+        request = urllib.request.Request(url, headers={
+            "User-Agent": "BULINGA-TSS-AI"
+        })
+        with urllib.request.urlopen(request, timeout=45) as response:
+            content = response.read()
+
+        filename = path[1].rsplit("/", 1)[-1]
+        media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        safe_filename = urllib.parse.quote(filename)
+        return StreamingResponse(
+            BytesIO(content),
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{safe_filename}",
+                "Content-Length": str(len(content)),
+                "Cache-Control": "no-store"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as error:
+        print(f"IMAGE DOWNLOAD ERROR: {error}")
+        raise HTTPException(status_code=502, detail="Ntibyashobotse gukuramo ifoto.")
+
+
 @app.post("/api/chat")
 async def chat_endpoint(
     query: str = Form(...),
@@ -1264,24 +1469,91 @@ async def chat_endpoint(
     file: UploadFile = File(None)
 ):
     try:
-        # Iyo user asabye amafoto ya BULINGA, ishakisha muri GitHub mu ibanga.
-        # GitHub/repository ntibishyirwa muri prompt ya AI cyangwa muri response.
+        # EDUCARD requests: scan the repository and return its card images,
+        # audio explanation and PowerPoint presentation when those files exist.
+        if is_educard_request(query):
+            assets = find_educard_repository_assets()
+            if response_lang.lower().startswith("english"):
+                card_response = (
+                    "EDUCARD (Education Smart Card) connects parents, students and schools. "
+                    "Parents add money to a student's card using the app or web portal; "
+                    "the student taps the card for approved school services such as "
+                    "canteen purchases, library borrowing and bus access; the school can "
+                    "monitor usage and transactions. Here are the card images in order "
+                    "and the available explanation files. 💳🏫"
+                )
+            else:
+                card_response = (
+                    "EDUCARD (Education Smart Card) ni uburyo buhuza ababyeyi, abanyeshuri "
+                    "n'ishuri hakoreshejwe ikarita imwe n'ikoranabuhanga. "
+                    "\n\n"
+                    "1. **Kongeramo amafaranga:** Umubyeyi yongeramo amafaranga kuri "
+                    "karita y'umunyeshuri akoresheje application cyangwa urubuga rwa Educard. "
+                    "\n"
+                    "2. **Gukoresha ikarita:** Umunyeshuri akoraho (tap) ikarita igihe "
+                    "agura ibyo kurya cyangwa ibikoresho ku ishuri, akoresha isomero, "
+                    "cyangwa serivisi z'imodoka y'ishuri. "
+                    "\n"
+                    "3. **Gukurikirana ibikorwa:** Ishuri rishobora gukurikirana "
+                    "ikoreshwa rya karita n'ibikorwa byayo; ababyeyi na bo babona amakuru "
+                    "n'imenyesha binyuze muri application. 💳🏫"
+                    "\n\n"
+                    "Dore amafoto ya karita akurikirana, Audio iyisobanura na PowerPoint "
+                    "bisobanura EDUCARD."
+                )
+
+            card_response += (
+                "\n\n[Download Educare Parent]"
+                "(https://play.google.com/store/apps/details?id=school.educare.parent&hl=en-US&pli=1)"
+                "\n\n[Sura urubuga rwacu](https://www.educard.rw/)"
+            )
+
+            downloads = [
+                {
+                    "label": item["label"],
+                    "url": "/api/download?path=" + urllib.parse.quote(item["path"], safe="")
+                }
+                for item in assets["downloads"]
+            ]
+
+            return JSONResponse({
+                "response": card_response,
+                "local_images": assets["images"],
+                "audio_url": assets["audio"],
+                "audio_download_url": assets["audio_download"],
+                "downloads": downloads,
+                "generated_img": None
+            })
+
+        # BULINGA TSS image requests: singular asks receive one image;
+        # plural asks receive the repository's matching image collection.
         if is_bulinga_photo_request(query):
             local_images = find_bulinga_repository_images()
+            if local_images and not is_plural_photo_request(query):
+                local_images = local_images[:1]
 
             if local_images:
                 if response_lang.lower().startswith("english"):
-                    photo_response = "Here are the available photos of BULINGA TSS / BULINGA TVET. 🏫📸"
+                    photo_response = (
+                        "Here is the BULINGA TSS / BULINGA TVET photo you requested. 🏫📸"
+                        if len(local_images) == 1 else
+                        "Here are the BULINGA TSS / BULINGA TVET photos you requested. 🏫📸"
+                    )
                 else:
-                    photo_response = "Dore amafoto ya BULINGA TSS / BULINGA TVET nk’uko ubisabye. 🏫📸"
+                    photo_response = (
+                        "Dore ifoto ya BULINGA TSS / BULINGA TVET wasabye. 🏫📸"
+                        if len(local_images) == 1 else
+                        "Dore amafoto ya BULINGA TSS / BULINGA TVET wasabye. 🏫📸"
+                    )
 
                 return JSONResponse({
                     "response": photo_response,
                     "local_images": local_images,
+                    "downloads": [],
                     "generated_img": None
                 })
 
-        # Ibindi bibazo byose bikomeza gusubizwa na AI nk'uko byari bisanzwe.
+        # Other questions continue through the existing Groq AI assistant.
         completion = client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=[
@@ -1290,7 +1562,7 @@ async def chat_endpoint(
                     "role": "system",
                     "content": (
                         "Never mention GitHub, repositories, source-code hosting, or internal "
-                        "background image-search operations to the user. These are internal "
+                        "background asset-search operations to the user. These are internal "
                         "implementation details. Respond only to the user's actual request."
                     )
                 },
@@ -1303,20 +1575,17 @@ async def chat_endpoint(
         )
         ai_response = completion.choices[0].message.content
 
-        if is_bulinga_photo_request(query):
-            ai_response += (
-                "\n\nNtabwo nabonye amafoto aboneka muri iki gihe. "
-                "Ongera ugerageze nyuma."
-            )
-
         return JSONResponse({
             "response": ai_response,
             "local_images": [],
+            "downloads": [],
             "generated_img": None
         })
-    except Exception as e:
+    except Exception as error:
+        print(f"CHAT ENDPOINT ERROR: {error}")
         return JSONResponse({
-            "response": f"Habaye ikibazo: {str(e)} ⚠️",
+            "response": "Habaye ikibazo mu gutunganya ubusabe bwawe. Ongera ugerageze. ⚠️",
             "local_images": [],
+            "downloads": [],
             "generated_img": None
         }, status_code=500)
