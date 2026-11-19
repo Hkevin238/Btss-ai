@@ -1164,7 +1164,8 @@ async def chat_ui():
                 let imagesHtml = '';
                 if (data.local_images && data.local_images.length > 0) {
                     data.local_images.forEach((imgUrl, index) => {
-                        const downloadUrl = '/api/download-image?url=' + encodeURIComponent(imgUrl);
+                        const imagePath = new URL(imgUrl, window.location.origin).searchParams.get('path');
+                        const downloadUrl = '/api/download-image?path=' + encodeURIComponent(imagePath || '');
                         imagesHtml += `
                             <div class="mt-3 flex flex-col gap-2">
                                 <img src="${imgUrl}" loading="lazy"
@@ -1353,40 +1354,60 @@ def github_raw_url(branch, path):
     )
 
 
-def find_bulinga_repository_images():
-    """Find numbered BULINGA school photos, excluding EDUCARD card images."""
+def repository_media_url(path):
+    """Return an app-local URL; never expose the upstream GitHub URL to users."""
+    return "/api/media?path=" + urllib.parse.quote(path, safe="")
+
+
+def find_bulinga_repository_images(query: str = ""):
+    """Find school photos, preferring filenames/folders matching the user request."""
     try:
         branch, paths = get_bulinga_repository_files()
         image_files = [
             path for path in paths
             if path.lower().endswith(IMAGE_EXTENSIONS)
-            and not re.search(r"(^|[/_-])card\\d+([_.-]|$)", path.lower())
+            and not re.search(r"(^|[/_-])card\d+([_.-]|$)", path.lower())
         ]
 
-        # The school's numbered photos (1.jpg, 2.jpg, 3.jpeg, ...) take priority.
+        # Prefer assets whose names/folders describe the subject the user requested.
+        ignored_terms = {
+            "ifoto", "amafoto", "foto", "photo", "photos", "picture", "pictures",
+            "image", "images", "show", "me", "please", "nyereka", "ndashaka",
+            "bulinga", "btss", "tss", "tvet", "school", "ishuri", "the", "and", "for"
+        }
+        requested_terms = {
+            token for token in re.findall(r"[a-z0-9]+", (query or "").lower())
+            if len(token) > 2 and token not in ignored_terms
+        }
+        matched = []
+        for path in image_files:
+            searchable = re.sub(r"[^a-z0-9]+", " ", path.lower())
+            score = sum(1 for term in requested_terms if term in searchable)
+            if score:
+                matched.append((score, path.lower(), path))
+        if matched:
+            matched.sort(key=lambda item: (-item[0], item[1]))
+            return [repository_media_url(item[2]) for item in matched]
+
+        # If filenames are generic (1.jpg, 2.jpg, ...), return the numbered photo set.
         numbered = [
             path for path in image_files
-            if re.fullmatch(r"\\d+\\.(jpg|jpeg|png|gif|tiff|tif|webp|bmp|avif)",
+            if re.fullmatch(r"\d+\.(jpg|jpeg|png|gif|tiff|tif|webp|bmp|avif)",
                             path.rsplit("/", 1)[-1].lower())
         ]
         numbered.sort(key=lambda path: (
-            int(re.match(r"\\d+", path.rsplit("/", 1)[-1]).group()),
+            int(re.match(r"\d+", path.rsplit("/", 1)[-1]).group()),
             path.lower()
         ))
-
         if numbered:
-            return [github_raw_url(branch, path) for path in numbered]
+            return [repository_media_url(path) for path in numbered]
 
-        # Fallback: use clearly school-related image filenames/folders only.
         school_terms = ("bulinga", "btss", "tss", "tvet", "school", "ishuri")
-        related = [
-            path for path in image_files
-            if any(term in path.lower() for term in school_terms)
-        ]
+        related = [path for path in image_files if any(term in path.lower() for term in school_terms)]
         related.sort(key=str.lower)
-        return [github_raw_url(branch, path) for path in related]
+        return [repository_media_url(path) for path in related]
     except Exception as error:
-        print(f"BULINGA GITHUB IMAGE SEARCH ERROR: {error}")
+        print(f"BULINGA IMAGE SEARCH ERROR: {error}")
         return []
 
 
@@ -1451,8 +1472,8 @@ def find_educard_repository_assets():
         )
 
         return {
-            "images": [github_raw_url(branch, path) for path in card_images],
-            "audio": github_raw_url(branch, audio_file) if audio_file else None,
+            "images": [repository_media_url(path) for path in card_images],
+            "audio": repository_media_url(audio_file) if audio_file else None,
             "audio_download": (
                 "/api/download?path=" + urllib.parse.quote(audio_file, safe="")
                 if audio_file else None
@@ -1472,6 +1493,33 @@ def find_educard_repository_assets():
     except Exception as error:
         print(f"EDUCARD GITHUB SEARCH ERROR: {error}")
         return {"images": [], "downloads": []}
+
+
+@app.get("/api/media")
+async def serve_repository_media(path: str):
+    """Stream repository media through this app, keeping the source account private."""
+    try:
+        branch, repository_paths = get_bulinga_repository_files()
+        if path not in repository_paths:
+            raise HTTPException(status_code=404, detail="Media ntiyabonetse.")
+        filename = path.rsplit("/", 1)[-1]
+        media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        if not (media_type.startswith("image/") or media_type.startswith("audio/")):
+            raise HTTPException(status_code=415, detail="Iyi media ntiyemewe.")
+        raw_url = github_raw_url(branch, path)
+        request = urllib.request.Request(raw_url, headers={"User-Agent": "BULINGA-TSS-AI"})
+        with urllib.request.urlopen(request, timeout=45) as response:
+            content = response.read()
+        return StreamingResponse(
+            BytesIO(content),
+            media_type=media_type,
+            headers={"Cache-Control": "public, max-age=300", "X-Content-Type-Options": "nosniff"}
+        )
+    except HTTPException:
+        raise
+    except Exception as error:
+        print(f"REPOSITORY MEDIA ERROR: {error}")
+        raise HTTPException(status_code=502, detail="Ntibyashobotse kwerekana iyi foto cyangwa audio.")
 
 
 @app.get("/api/download")
@@ -1510,37 +1558,24 @@ async def download_repository_file(path: str):
 
 
 @app.get("/api/download-image")
-async def download_repository_image(url: str):
-    """Download an image only when its URL belongs to the configured repository."""
+async def download_repository_image(path: str):
+    """Download an approved repository image without exposing its upstream URL."""
     try:
-        prefix = f"https://raw.githubusercontent.com/{GITHUB_REPOSITORY}/"
-        if not url.startswith(prefix):
-            raise HTTPException(status_code=400, detail="Image URL itemewewe.")
-
         branch, repository_paths = get_bulinga_repository_files()
-        raw_path = urllib.parse.unquote(url[len(prefix):]).split("/", 1)
-        if len(raw_path) != 2 or raw_path[0] != urllib.parse.quote(branch, safe=""):
+        if path not in repository_paths or not path.lower().endswith(IMAGE_EXTENSIONS):
             raise HTTPException(status_code=404, detail="Image ntiyabonetse.")
-        image_path = raw_path[1]
-        if image_path not in repository_paths:
-            raise HTTPException(status_code=404, detail="Image ntiyabonetse.")
-
-        request = urllib.request.Request(url, headers={
-            "User-Agent": "BULINGA-TSS-AI"
-        })
+        raw_url = github_raw_url(branch, path)
+        request = urllib.request.Request(raw_url, headers={"User-Agent": "BULINGA-TSS-AI"})
         with urllib.request.urlopen(request, timeout=45) as response:
             content = response.read()
-
-        filename = image_path.rsplit("/", 1)[-1]
+        filename = path.rsplit("/", 1)[-1]
         media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
         safe_filename = urllib.parse.quote(filename)
         return StreamingResponse(
-            BytesIO(content),
-            media_type=media_type,
+            BytesIO(content), media_type=media_type,
             headers={
                 "Content-Disposition": f"attachment; filename*=UTF-8''{safe_filename}",
-                "Content-Length": str(len(content)),
-                "Cache-Control": "no-store"
+                "Content-Length": str(len(content)), "Cache-Control": "no-store"
             }
         )
     except HTTPException:
@@ -1616,7 +1651,7 @@ async def chat_endpoint(
         # BULINGA TSS image requests: singular asks receive one image;
         # plural asks receive the repository's matching image collection.
         if is_bulinga_photo_request(query):
-            local_images = find_bulinga_repository_images()
+            local_images = find_bulinga_repository_images(query)
             if local_images and not is_plural_photo_request(query):
                 local_images = local_images[:1]
 
