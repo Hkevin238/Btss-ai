@@ -253,7 +253,7 @@ Vision: “To become a center of excellence in ICT and business education, produ
 Mission: “To provide quality, competency-based technical and vocational education that equips learners with relevant ICT, business, and soft skills for successful careers and sustainable socio-economic development.”
 Location: Kiyoro Village, Munazi Cell, Mushishiro Sector, Muhanga District, Southern Province, Rwanda 📍.
 School Fees & Financials: 96,000 Frw + 1,500 Frw Insurance + 2,000 Frw ID/Card = 96,500 Frw Total 💰. Total 5-year Strategic Plan budget is RWF 850,000,000 (2026-2030).
-Account: Mwarimu Sacco, Account Number: 2106803, Account Name: BULINGA TVET SCHOOL 🏦.
+Account: Mwarimu Sacco, Account Number: 900009815200, Account Name: BULINGA TVET SCHOOL 🏦.
 Programs & Combinations: 
 - Software Development (Levels 3, 4 & 5)
 - Network and internet technology (Levels 3, 4, 5)
