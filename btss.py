@@ -15,6 +15,7 @@ import hmac
 import secrets
 from io import BytesIO
 import mimetypes
+import re
 from datetime import datetime, timedelta, timezone
 
 app = FastAPI(title="BULINGA AI")
@@ -1038,6 +1039,52 @@ async def chat_ui():
             URL.revokeObjectURL(objectUrl);
         }
 
+        async function copyResource(url) {
+            try {
+                await navigator.clipboard.writeText(url);
+                alert('Link copied successfully! 📋');
+            } catch (error) {
+                const temporary = document.createElement('textarea');
+                temporary.value = url;
+                document.body.appendChild(temporary);
+                temporary.select();
+                document.execCommand('copy');
+                temporary.remove();
+                alert('Link copied! 📋');
+            }
+        }
+
+        async function shareResource(url, title) {
+            const shareData = { title: title || 'BULINGA TSS AI', url: url };
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                } else {
+                    await copyResource(url);
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') await copyResource(url);
+            }
+        }
+
+        async function copyAIText(contentId) {
+            const element = document.getElementById(contentId);
+            if (!element) return;
+            await copyResource(element.innerText || element.textContent || '');
+        }
+
+        async function shareAIText(contentId) {
+            const element = document.getElementById(contentId);
+            if (!element) return;
+            const text = element.innerText || element.textContent || '';
+            try {
+                if (navigator.share) await navigator.share({ title: 'BULINGA TSS AI', text: text });
+                else await copyResource(text);
+            } catch (error) {
+                if (error.name !== 'AbortError') await copyResource(text);
+            }
+        }
+
         async function sendMessage(e) {
             e.preventDefault();
             const inputField = document.getElementById('userInput');
@@ -1123,10 +1170,15 @@ async def chat_ui():
                                 <img src="${imgUrl}" loading="lazy"
                                      class="rounded-xl max-h-80 object-contain shadow-md border border-gray-700/30"
                                      alt="BULINGA / EDUCARD image ${index + 1}">
-                                <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer"
-                                   class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold">
-                                   Download here
-                                </a>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="${downloadUrl}"
+                                       class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold"
+                                       download>⬇️ Download here</a>
+                                    <button type="button" onclick="copyResource('${imgUrl}')"
+                                       class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 text-xs font-semibold">📋 Copy</button>
+                                    <button type="button" onclick="shareResource('${imgUrl}', 'BULINGA / EDUCARD photo')"
+                                       class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 text-xs font-semibold">↗️ Share</button>
+                                </div>
                             </div>`;
                     });
                 }
@@ -1140,10 +1192,15 @@ async def chat_ui():
                                 <source src="${data.audio_url}" type="audio/mpeg">
                                 Your browser does not support audio playback.
                             </audio>
-                            <a href="${data.audio_download_url || data.audio_url}"
-                               class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold">
-                               Download here
-                            </a>
+                            <div class="flex flex-wrap gap-2">
+                                <a href="${data.audio_download_url || data.audio_url}"
+                                   class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold"
+                                   download>⬇️ Download here</a>
+                                <button type="button" onclick="copyResource('${data.audio_url}')"
+                                   class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 text-xs font-semibold">📋 Copy</button>
+                                <button type="button" onclick="shareResource('${data.audio_url}', 'EDUCARD explanation audio')"
+                                   class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 text-xs font-semibold">↗️ Share</button>
+                            </div>
                         </div>`;
                 }
 
@@ -1154,7 +1211,7 @@ async def chat_ui():
                         downloadsHtml += `
                             <a href="${file.url}" class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold"
                                download>
-                               ${file.label}
+                               ⬇️ ${file.label}
                             </a>`;
                     });
                     downloadsHtml += '</div>';
@@ -1173,10 +1230,20 @@ async def chat_ui():
                             ${imagesHtml}
                             ${audioHtml}
                             ${downloadsHtml}
-                            <button type="button" onclick="downloadAIText('${contentId}')"
-                                class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 text-xs font-semibold mt-2">
-                                Download text (.txt)
-                            </button>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <button type="button" onclick="downloadAIText('${contentId}')"
+                                    class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold">
+                                    ⬇️ Download here
+                                </button>
+                                <button type="button" onclick="copyAIText('${contentId}')"
+                                    class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 text-xs font-semibold">
+                                    📋 Copy
+                                </button>
+                                <button type="button" onclick="shareAIText('${contentId}')"
+                                    class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 text-xs font-semibold">
+                                    ↗️ Share
+                                </button>
+                            </div>
                         </div>
                     </div>`;
                 chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -1287,19 +1354,37 @@ def github_raw_url(branch, path):
 
 
 def find_bulinga_repository_images():
-    """Find school-related images in the repository."""
+    """Find numbered BULINGA school photos, excluding EDUCARD card images."""
     try:
         branch, paths = get_bulinga_repository_files()
         image_files = [
             path for path in paths
             if path.lower().endswith(IMAGE_EXTENSIONS)
+            and not re.search(r"(^|[/_-])card\\d+([_.-]|$)", path.lower())
         ]
-        school_terms = ("bulinga", "btss", "tss", "tvet", "school", "ishuri")
-        image_files.sort(key=lambda path: (
-            not any(term in path.lower() for term in school_terms),
+
+        # The school's numbered photos (1.jpg, 2.jpg, 3.jpeg, ...) take priority.
+        numbered = [
+            path for path in image_files
+            if re.fullmatch(r"\\d+\\.(jpg|jpeg|png|gif|tiff|tif|webp|bmp|avif)",
+                            path.rsplit("/", 1)[-1].lower())
+        ]
+        numbered.sort(key=lambda path: (
+            int(re.match(r"\\d+", path.rsplit("/", 1)[-1]).group()),
             path.lower()
         ))
-        return [github_raw_url(branch, path) for path in image_files]
+
+        if numbered:
+            return [github_raw_url(branch, path) for path in numbered]
+
+        # Fallback: use clearly school-related image filenames/folders only.
+        school_terms = ("bulinga", "btss", "tss", "tvet", "school", "ishuri")
+        related = [
+            path for path in image_files
+            if any(term in path.lower() for term in school_terms)
+        ]
+        related.sort(key=str.lower)
+        return [github_raw_url(branch, path) for path in related]
     except Exception as error:
         print(f"BULINGA GITHUB IMAGE SEARCH ERROR: {error}")
         return []
@@ -1433,8 +1518,11 @@ async def download_repository_image(url: str):
             raise HTTPException(status_code=400, detail="Image URL itemewewe.")
 
         branch, repository_paths = get_bulinga_repository_files()
-        path = urllib.parse.unquote(url[len(prefix):]).split("/", 1)
-        if len(path) != 2 or path[1] not in repository_paths:
+        raw_path = urllib.parse.unquote(url[len(prefix):]).split("/", 1)
+        if len(raw_path) != 2 or raw_path[0] != urllib.parse.quote(branch, safe=""):
+            raise HTTPException(status_code=404, detail="Image ntiyabonetse.")
+        image_path = raw_path[1]
+        if image_path not in repository_paths:
             raise HTTPException(status_code=404, detail="Image ntiyabonetse.")
 
         request = urllib.request.Request(url, headers={
@@ -1443,7 +1531,7 @@ async def download_repository_image(url: str):
         with urllib.request.urlopen(request, timeout=45) as response:
             content = response.read()
 
-        filename = path[1].rsplit("/", 1)[-1]
+        filename = image_path.rsplit("/", 1)[-1]
         media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
         safe_filename = urllib.parse.quote(filename)
         return StreamingResponse(
