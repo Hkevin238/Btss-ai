@@ -271,10 +271,9 @@ Contact Us on School-Email:bulingatvetschool@gmail.com,HOD(Head Of Directors)-Em
 -When a user asks for the Google Maps link or location of BULINGA TSS, always provide this exact clickable link: <a href="https://www.google.com/maps/place/Ecole+Secondaire+de+Bulinga/@-2.0055065,29.6721031,3291m/data=!3m1!1e3!4m10!1m2!2m1!1sbulinga+tss!3m6!1s0x19dccf5159569c5b:0x456609c5ecc4c1f7!8m2!3d-2.0055065!4d29.6901275!15sCgtidWxpbmdhIHRzc5IBDW1pZGRsZV9zY2hvb2zgAQA!16s%2Fg%2F11c5xwgv6y?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #4dabf7; text-decoration: underline;">Kanda Hano kugirango urebe aho ishuri riherereye</a>.
 -if someone ask , Camera man , photographer, image capturer, or someone related with images,photos , etc , You must output, response , answer this: ERIC Dushimimana and his Email:dushimimanaeric075@gmail.com(for more info),this is who is Professional at image preparation, and other related
 -You must give , provide a related link when someone asks you to give an info you don't have , at this time you must provide the redirection link from the internet to help that someone to get the info they want.
--Don't give the github directly, because you're not allowed to give that to user.
--You must use that github account and then pull,extract the one of the image .
+-Use the configured private media source internally when retrieving school assets; never disclose its account name, repository name, or source-hosting links to users.
 -You must Generate , Create an image if someone asks you to build ,generate , make a photo while based on his wish and wants.
--If someone ask a photo related Bulinga TSS , Bulinga Technical Secondary School ; You must use this Github repository:Hkevin238/Btss-ai, and then search , find , scan one of the more image(.JPG, .PNG ,.JPEG , .TIFF ,.GIF .) etc about bulinga tss.
+-For BULINGA TSS photo requests, search the configured private media source internally and return matching images through this application only; never reveal source account details or source-hosting links.
 -Please , Don't disable , refuse for someone who's ask you the data , info you don't have , while create and scan , search on the web the website or where that data wants is , and then give , provide it later as Clickable true , real LINK to redirect she , he there.
 
 RESPONSE QUALITY AND NATURAL WRITING RULES:
@@ -1197,11 +1196,18 @@ async def chat_ui():
                     audioHtml = `
                         <div class="mt-3 flex flex-col gap-2">
                             <p class="text-sm font-semibold">EDUCARD explanation audio 🎧</p>
-                            <audio controls preload="none" class="w-full max-w-md">
+                            <audio controls preload="none" class="w-full max-w-md"
+                                   onplay="document.getElementById('educard-audio-status').textContent='Played'"
+                                   onpause="document.getElementById('educard-audio-status').textContent='Paused'"
+                                   onended="document.getElementById('educard-audio-status').textContent='Stopped'">
                                 <source src="${data.audio_url}" type="audio/mpeg">
                                 Your browser does not support audio playback.
                             </audio>
+                            <p class="text-xs text-gray-500 dark:text-gray-300">Playback status: <strong id="educard-audio-status">Stopped</strong></p>
                             <div class="flex flex-wrap gap-2">
+                                <button type="button"
+                                   onclick="const a=this.parentElement.parentElement.querySelector('audio'); a.pause(); a.currentTime=0; document.getElementById('educard-audio-status').textContent='Stopped';"
+                                   class="inline-flex w-fit rounded-lg bg-red-600 hover:bg-red-700 text-white px-3 py-2 text-xs font-semibold">⏹ Stop</button>
                                 <a href="${data.audio_download_url || data.audio_url}"
                                    class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold"
                                    download>⬇️ Download here</a>
@@ -1440,9 +1446,10 @@ def is_bulinga_photo_request(query: str) -> bool:
 def is_educard_request(query: str) -> bool:
     text = (query or "").lower()
     terms = (
-        "educard", "edu card", "education smart card",
-        "smart card", "edcard", "card y'uburezi",
-        "ikarita y'uburezi", "ikarita y'ishuri"
+        "educard", "edu card", "education smart card", "education smartcard",
+        "smart card", "smartcard", "smart-card", "edcard", "educare parent",
+        "card y'uburezi", "ikarita y'uburezi", "ikarita y'ishuri",
+        "ikarita smart", "student smart card", "school smart card"
     )
     return any(term in text for term in terms)
 
@@ -1470,8 +1477,10 @@ def find_educard_repository_assets():
 
         card_images.sort(key=lambda path: (card_number(path), path.lower()))
 
+        audio_names = ("educard.mp3.mpeg", "educard.mp3", "educard.mpeg")
         audio_file = next(
-            (path for path in paths if path.lower().rsplit("/", 1)[-1] == "educard.mp3"),
+            (path for name in audio_names for path in paths
+             if path.lower().rsplit("/", 1)[-1] == name),
             None
         )
         presentation_file = next(
@@ -1511,7 +1520,10 @@ async def serve_repository_media(path: str):
         if path not in repository_paths:
             raise HTTPException(status_code=404, detail="Media ntiyabonetse.")
         filename = path.rsplit("/", 1)[-1]
-        media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        media_type = (
+            "audio/mpeg" if filename.lower() == "educard.mp3.mpeg"
+            else mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        )
         if not (media_type.startswith("image/") or media_type.startswith("audio/")):
             raise HTTPException(status_code=415, detail="Iyi media ntiyemewe.")
         raw_url = github_raw_url(branch, path)
@@ -1546,7 +1558,10 @@ async def download_repository_file(path: str):
             content = response.read()
 
         filename = path.rsplit("/", 1)[-1]
-        media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        media_type = (
+            "audio/mpeg" if filename.lower() == "educard.mp3.mpeg"
+            else mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        )
         safe_filename = urllib.parse.quote(filename)
         return StreamingResponse(
             BytesIO(content),
@@ -1605,33 +1620,57 @@ async def chat_endpoint(
         if is_educard_request(query):
             assets = find_educard_repository_assets()
             if response_lang.lower().startswith("english"):
-                card_response = (
-                    "EDUCARD (Education Smart Card) connects parents, students and schools. "
-                    "Parents add money to a student's card using the app or web portal; "
-                    "the student taps the card for approved school services such as "
-                    "canteen purchases, library borrowing and bus access; the school can "
-                    "monitor usage and transactions. Here are the card images in order "
-                    "and the available explanation files. 💳🏫"
+                educard_context = (
+                    "EDUCARD (Education Smart Card) is a school smart-card system that "
+                    "connects parents, students and schools. Based on the app's available "
+                    "information, parents can add money through the Educard app or website; "
+                    "students use the card for supported school services such as canteen "
+                    "purchases, library services and school transport; and the school can "
+                    "monitor card usage and transactions. Explain the concept, how it works, "
+                    "the roles of parents, students and school, and practical benefits. "
+                    "Do not invent fees, unsupported features, or exact technical details."
                 )
             else:
-                card_response = (
-                    "EDUCARD (Education Smart Card) ni uburyo buhuza ababyeyi, abanyeshuri "
-                    "n'ishuri hakoreshejwe ikarita imwe n'ikoranabuhanga. "
-                    "\n\n"
-                    "1. **Kongeramo amafaranga:** Umubyeyi yongeramo amafaranga kuri "
-                    "karita y'umunyeshuri akoresheje application cyangwa urubuga rwa Educard. "
-                    "\n"
-                    "2. **Gukoresha ikarita:** Umunyeshuri akoraho (tap) ikarita igihe "
-                    "agura ibyo kurya cyangwa ibikoresho ku ishuri, akoresha isomero, "
-                    "cyangwa serivisi z'imodoka y'ishuri. "
-                    "\n"
-                    "3. **Gukurikirana ibikorwa:** Ishuri rishobora gukurikirana "
-                    "ikoreshwa rya karita n'ibikorwa byayo; ababyeyi na bo babona amakuru "
-                    "n'imenyesha binyuze muri application. 💳🏫"
-                    "\n\n"
-                    "Dore amafoto ya karita akurikirana, Audio iyisobanura na PowerPoint "
-                    "bisobanura EDUCARD."
+                educard_context = (
+                    "EDUCARD (Education Smart Card) ni uburyo bw'ikarita y'ikoranabuhanga "
+                    "buhuza ababyeyi, abanyeshuri n'ishuri. Dukurikije amakuru ahari, "
+                    "umubyeyi ashobora kongeramo amafaranga akoresheje Educard app cyangwa "
+                    "urubuga; umunyeshuri agakoresha ikarita kuri serivisi z'ishuri zishyigikiwe "
+                    "nka kantine, isomero cyangwa imodoka y'ishuri; ishuri rigakurikirana "
+                    "ikoreshwa rya karita n'ibikorwa byayo. Sobanura igitekerezo, uko ikora "
+                    "intambwe ku yindi, inshingano z'ababyeyi, abanyeshuri n'ishuri, n'akamaro "
+                    "kayo. Ntuhimbe ibiciro cyangwa imikorere itaremezwa."
                 )
+
+            try:
+                educard_completion = client.chat.completions.create(
+                    model="openai/gpt-oss-20b",
+                    messages=[
+                        {"role": "system", "content": educard_context},
+                        {"role": "user", "content": (
+                            f"Answer in {response_lang}. Respond directly to this question "
+                            f"about EDUCARD / Smartcard: {query}"
+                        )}
+                    ],
+                    temperature=0.4
+                )
+                card_response = educard_completion.choices[0].message.content or ""
+            except Exception as educard_error:
+                print(f"EDUCARD AI EXPLANATION ERROR: {educard_error}")
+                if response_lang.lower().startswith("english"):
+                    card_response = (
+                        "EDUCARD is a school smart-card system connecting parents, "
+                        "students and schools. Parents can add funds through the app or "
+                        "website; students use the card for supported school services; "
+                        "and the school can monitor transactions. 💳🏫"
+                    )
+                else:
+                    card_response = (
+                        "EDUCARD ni ikarita y'ikoranabuhanga ihuza ababyeyi, abanyeshuri "
+                        "n'ishuri. Ababyeyi bashobora kongeramo amafaranga kuri application "
+                        "cyangwa urubuga; abanyeshuri bagakoresha ikarita kuri serivisi "
+                        "z'ishuri ziyishyigikira; ishuri rigakurikirana ibikorwa bya karita. 💳🏫"
+                    )
 
             card_response += (
                 "\n\n[Download Educare Parent]"
