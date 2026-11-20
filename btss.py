@@ -541,6 +541,8 @@ async def chat_ui():
                         <option value="English">English</option>
                         <option value="Français">Français</option>
                         <option value="Kiswahili">Kiswahili</option>
+                        <option value="Lingala">Lingala</option>
+                        <option value="Chinese">Chinese</option>
                     </select>
                 </div>
 
@@ -551,6 +553,8 @@ async def chat_ui():
                         <option value="English">English</option>
                         <option value="Français">Français</option>
                         <option value="Kiswahili">Kiswahili</option>
+                        <option value="Lingala">Lingala</option>
+                        <option value="Chinese">Chinese</option>
                     </select>
                 </div>
             </div>
@@ -596,7 +600,7 @@ async def chat_ui():
                    href="https://docs.google.com/forms/d/e/1FAIpQLSfkJpKdEOUBHTSqoQ_nux4DSLqvJVI8suOcPsAPT8AU1MuhWA/viewform?usp=dialog"
                    class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-md transition whitespace-nowrap"
                    aria-label="TUMENYESHE - Fungura Google Form">
-                    TUMENYESHE
+                    T U M E N Y E S H E
                 </a>
             </div>
         </header>
@@ -687,7 +691,7 @@ async def chat_ui():
                 return;
             }
             if (password.length < 6) {
-                showAuthMessage('Password igomba kugira nibura inyuguti 6.', true);
+                showAuthMessage('Password igomba kugira nibura inyuguti 6+.', true);
                 return;
             }
 
@@ -735,7 +739,7 @@ async def chat_ui():
                 const session = await check.json();
 
                 if (!check.ok || !session.authenticated || !session.user) {
-                    throw new Error('Konti yako yakozwe, ariko session ntiyabitswe. Reba cookie/HTTPS settings za hosting.');
+                    throw new Error('Konti yakozwe, ariko session ntiyabitswe. Reba cookie/HTTPS settings za hosting.');
                 }
 
                 currentUser = session.user;
@@ -799,7 +803,7 @@ async def chat_ui():
                 "logout": "Sohoka",
                 "main_title": "BULINGA AI Assistant 🚀",
                 "placeholder": "Baza icyo ushaka cyose cyangwa wandike 'Amakuru ya Bulinga'...",
-                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
+                "footer": "Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking....... 💭"
             },
             "English": {
@@ -811,7 +815,7 @@ async def chat_ui():
                 "logout": "Logout",
                 "main_title": "BULINGA AI Assistant 🚀",
                 "placeholder": "Ask anything or type like 'What about Bulinga info...'",
-                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
+                "footer": "Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             },
             "Français": {
@@ -823,7 +827,7 @@ async def chat_ui():
                 "logout": "Se déconnecter",
                 "main_title": "Assistant IA BULINGA 🚀",
                 "placeholder": "Posez une question ou tapez 'Amakuru ya Bulinga'...",
-                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
+                "footer": "Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             },
             "Kiswahili": {
@@ -835,7 +839,7 @@ async def chat_ui():
                 "logout": "Toka",
                 "main_title": "Msaidizi wa AI wa BULINGA 🚀",
                 "placeholder": "Uliza chochote auandike 'Amakuru ya Bulinga'...",
-                "footer": "Developed by Dev Kevin • Bulinga TSS AI",
+                "footer": "Dev Kevin • Bulinga TSS AI",
                 "thinking": "⚪ Bulinga is Thinking......."
             }
         };
