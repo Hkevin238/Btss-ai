@@ -620,7 +620,7 @@ async def chat_ui():
                 </button>
             </form>
             <div id="fileIndicator" class="text-xs text-blue-400 mt-1 px-2 hidden"></div>
-            <div id="footerCredit" class="text-center text-[11px] text-gray-300 mt-2">Dev Kevin <marquee direction="right"> BULINGA AI IRIMO KWAGURWA | REBA NEZA IBISUBIZO AI YACU IGUHA !!</marquee> </div>
+            <div id="footerCredit" class="text-center text-[11px] text-gray-300 mt-2">Dev Kevin <marquee direction="right"scrollamount="5"> BULINGA AI IRIMO KWAGURWA | REBA NEZA IBISUBIZO AI YACU IGUHA !!</marquee> </div>
         </div>
     </main>
 
@@ -1621,7 +1621,7 @@ async def chat_endpoint(
             assets = find_educard_repository_assets()
             if response_lang.lower().startswith("english"):
                 educard_context = (
-                    "EDUCARD (Education Smart Card) is a school smart-card system that "
+                    "EDUCARD ,Smart Card (Education Smart Card) is a school smart-card system that "
                     "connects parents, students and schools. Based on the app's available "
                     "information, parents can add money through the Educard app or website; "
                     "students use the card for supported school services such as canteen "
@@ -1632,7 +1632,7 @@ async def chat_endpoint(
                 )
             else:
                 educard_context = (
-                    "EDUCARD (Education Smart Card) ni uburyo bw'ikarita y'ikoranabuhanga "
+                    "EDUCARD ,Smart Card(Education Smart Card) ni uburyo bw'ikarita y'ikoranabuhanga "
                     "buhuza ababyeyi, abanyeshuri n'ishuri. Dukurikije amakuru ahari, "
                     "umubyeyi ashobora kongeramo amafaranga akoresheje Educard app cyangwa "
                     "urubuga; umunyeshuri agakoresha ikarita kuri serivisi z'ishuri zishyigikiwe "
