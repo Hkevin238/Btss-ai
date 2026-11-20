@@ -1250,7 +1250,7 @@ async def chat_ui():
                             <div class="mt-2 flex flex-wrap gap-2">
                                 <button type="button" onclick="downloadAIText('${contentId}')"
                                     class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold">
-                                    ⬇️ Download here
+                                    ⬇️ Download
                                 </button>
                                 <button type="button" onclick="copyAIText('${contentId}')"
                                     class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 text-xs font-semibold">
@@ -1258,7 +1258,7 @@ async def chat_ui():
                                 </button>
                                 <button type="button" onclick="shareAIText('${contentId}')"
                                     class="inline-flex w-fit rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 text-xs font-semibold">
-                                    ↗️ Share
+                                    ↗️Share
                                 </button>
                             </div>
                         </div>
