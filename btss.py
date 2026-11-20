@@ -620,7 +620,7 @@ async def chat_ui():
                 </button>
             </form>
             <div id="fileIndicator" class="text-xs text-blue-400 mt-1 px-2 hidden"></div>
-            <div id="footerCredit" class="text-center text-[11px] text-gray-300 mt-2">Dev Kevin • Bulinga TSS AI</div>
+            <div id="footerCredit" class="text-center text-[11px] text-gray-300 mt-2">Dev Kevin | BULINGA AI IRIMO KWAGURWA | REBA NEZA IBISUBIZO AI YACU IGUHA !! </div>
         </div>
     </main>
 
