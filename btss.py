@@ -1163,7 +1163,7 @@ async def chat_ui():
                 const formData = new FormData();
                 formData.append('query', currentQuery);
                 formData.append('response_lang', respLang);
-                const photoIndex = Number(sessionStorage.getItem('bulinga_photo_index') || '0');
+                const photoIndex = Number(sessionStorage.getItem('bulinga_tss_photo_index_v2') || '0');
                 formData.append('image_index', String(photoIndex));
                 if (hasFile) {
                     formData.append('file', fileInput.files[0]);
@@ -1175,8 +1175,8 @@ async def chat_ui():
                     body: formData
                 });
                 const data = await response.json();
-                if (data.local_images && data.local_images.length > 0) {
-                    sessionStorage.setItem('bulinga_photo_index', String(photoIndex + 1));
+                if (data.bulinga_photo === true && data.local_images && data.local_images.length > 0) {
+                    sessionStorage.setItem('bulinga_tss_photo_index_v2', String(photoIndex + 1));
                 }
                 
                 document.getElementById(thinkingId).remove();
@@ -1395,10 +1395,10 @@ def repository_media_url(path):
 
 
 def find_bulinga_repository_images(image_index: int = 0):
-    """Return exactly one school photo in the requested fixed sequence."""
+    """Return one school photo and the number of approved photos found."""
     try:
         _, paths = get_bulinga_repository_files()
-        # These are the only approved school-photo filenames and their exact order.
+        # Only these filenames are allowed, in this exact sequence.
         ordered_names = ["1.jpeg"] + [f"{n}.jpg" for n in range(2, 16)] + [f"{n}.jpeg" for n in range(16, 22)]
         path_by_name = {}
         for path in sorted(paths, key=str.lower):
@@ -1407,12 +1407,12 @@ def find_bulinga_repository_images(image_index: int = 0):
                 path_by_name[basename] = path
 
         ordered_paths = [path_by_name[name] for name in ordered_names if name in path_by_name]
-        if image_index < 0 or image_index >= len(ordered_paths):
-            return []
-        return [repository_media_url(ordered_paths[image_index])]
+        if not ordered_paths or image_index < 0 or image_index >= len(ordered_paths):
+            return [], len(ordered_paths)
+        return [repository_media_url(ordered_paths[image_index])], len(ordered_paths)
     except Exception as error:
         print(f"BULINGA IMAGE SEARCH ERROR: {error}")
-        return []
+        return None, 0
 
 
 def is_bulinga_photo_request(query: str) -> bool:
@@ -1746,12 +1746,17 @@ async def chat_endpoint(
         # BULINGA TSS image requests: singular asks receive one image;
         # plural asks receive the repository's matching image collection.
         if is_bulinga_photo_request(query):
-            local_images = find_bulinga_repository_images(max(0, image_index))
+            local_images, total_bulinga_photos = find_bulinga_repository_images(max(0, image_index))
             if local_images:
                 if response_lang.lower().startswith("english"):
-                    photo_response = f"Here is BULINGA TSS photo {image_index + 1}. 🏫📸"
+                    photo_response = f"Here is BULINGA TSS photo {image_index + 1} of {total_bulinga_photos}. 🏫📸"
                 else:
-                    photo_response = f"Dore ifoto ya BULINGA TSS nimero {image_index + 1}. 🏫📸"
+                    photo_response = f"Dore ifoto ya BULINGA TSS nimero {image_index + 1} muri {total_bulinga_photos}. 🏫📸"
+            elif total_bulinga_photos == 0:
+                if response_lang.lower().startswith("english"):
+                    photo_response = "I could not find the BULINGA TSS photos in the GitHub repository. Please check the repository connection and filenames."
+                else:
+                    photo_response = "Sinashoboye kubona amafoto ya BULINGA TSS muri GitHub. Reba niba repository iboneka n'amazina y'amafoto."
             else:
                 if response_lang.lower().startswith("english"):
                     photo_response = "There are no more photos in the approved BULINGA TSS photo sequence."
@@ -1760,7 +1765,9 @@ async def chat_endpoint(
 
             return JSONResponse({
                 "response": photo_response,
-                "local_images": local_images,
+                "local_images": local_images or [],
+                "bulinga_photo": True,
+                "bulinga_photo_total": total_bulinga_photos,
                 "downloads": [],
                 "generated_img": None
             })
