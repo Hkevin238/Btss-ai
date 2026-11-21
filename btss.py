@@ -1,4 +1,5 @@
 import os
+from openai import OpenAI
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi import HTTPException
@@ -28,6 +29,8 @@ app.mount("/static", StaticFiles(directory="."), name="static")
 # =========================================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY or "YOUR_GROQ_API_KEY")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # SQLite is used for ordinary email/password authentication.
 # Keep the database outside the publicly served static directory.
@@ -1249,7 +1252,12 @@ async def chat_ui():
                         </div>
                         <div class="ai-bubble flex-1 bg-white/95 dark:bg-[#3a3b3c]/95 backdrop-blur p-4 rounded-2xl leading-relaxed text-sm shadow-md flex flex-col gap-2">
                             <div id="${contentId}" class="ai-response-content"></div>
-                            ${data.generated_img ? `<img src="${data.generated_img}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Generated Image">` : ''}
+                            ${data.generated_img ? `
+                                <img src="${data.generated_img}" class="rounded-xl max-h-80 object-cover shadow-md mt-3 border border-gray-700/30" alt="Generated Image">
+                                <a href="${data.generated_img}" download="bulinga-ai-generated-image.png"
+                                   class="inline-flex w-fit rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold">
+                                   ⬇️ Download Image
+                                </a>` : ''}
                             ${imagesHtml}
                             ${audioHtml}
                             ${downloadsHtml}
@@ -1623,6 +1631,62 @@ async def chat_endpoint(
     file: UploadFile = File(None)
 ):
     try:
+        # Generate new images from user prompts with OpenAI GPT Image 2.5 Flare.
+        image_request_verbs = (
+            "generate", "create", "make", "draw", "design", "render",
+            "produce", "kora", "shushanya", "nshushanyirize"
+        )
+        image_subject_terms = (
+            "image", "photo", "picture", "logo", "drawing", "illustration",
+            "poster", "wallpaper", "icon", "banner", "portrait", "artwork",
+            "foto", "ifoto", "ishusho", "ikirango"
+        )
+        direct_kinyarwanda_image_requests = (
+            "unkorere ifoto", "nkorera ifoto", "kora ifoto",
+            "nshushanyirize", "shushanya ifoto"
+        )
+        query_lower = query.lower()
+        is_image_generation_request = (
+            (
+                any(term in query_lower for term in image_request_verbs)
+                and any(term in query_lower for term in image_subject_terms)
+            )
+            or any(term in query_lower for term in direct_kinyarwanda_image_requests)
+        )
+
+        if is_image_generation_request:
+            if not openai_client:
+                raise HTTPException(
+                    status_code=500,
+                    detail="OPENAI_API_KEY ntishyizwe muri environment variables."
+                )
+
+            image_result = openai_client.images.generate(
+                model="gpt-image-2.5-flare",
+                prompt=query,
+                size="1024x1024",
+                quality="high",
+                n=1,
+                output_format="png"
+            )
+
+            generated_image_base64 = image_result.data[0].b64_json
+            generated_image_url = (
+                "data:image/png;base64," + generated_image_base64
+            )
+
+            if response_lang.lower().startswith("english"):
+                generated_response = "Here is the image I created for you. 🎨✨"
+            else:
+                generated_response = "Dore ifoto nagukoreye nk'uko wabinsabye. 🎨✨"
+
+            return JSONResponse({
+                "response": generated_response,
+                "local_images": [],
+                "downloads": [],
+                "generated_img": generated_image_url
+            })
+
         # EDUCARD requests: scan the repository and return its card images,
         # audio explanation and PowerPoint presentation when those files exist.
         if is_educard_request(query):
