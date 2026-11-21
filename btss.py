@@ -1630,7 +1630,7 @@ async def chat_endpoint(
             or any(term in query_lower for term in direct_kinyarwanda_image_requests)
         )
 
-        if is_image_generation_request:
+        if is_image_generation_request and not is_bulinga_photo_request(query):
             if not openai_client:
                 raise HTTPException(
                     status_code=500,
