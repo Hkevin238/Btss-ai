@@ -1146,6 +1146,8 @@ async def chat_ui():
                 await wait(800);
                 textEl.innerText = "Generating your image.......";
                 await wait(800);
+                textEl.innerText = "Preparing your image.......";
+                await wait(800);
                 textEl.innerText = "Please wait a moment......";
                 await wait(800);
                 textEl.innerText = "Be ready to see a Magic 🪄";
