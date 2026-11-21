@@ -1163,6 +1163,8 @@ async def chat_ui():
                 const formData = new FormData();
                 formData.append('query', currentQuery);
                 formData.append('response_lang', respLang);
+                const photoIndex = Number(sessionStorage.getItem('bulinga_photo_index') || '0');
+                formData.append('image_index', String(photoIndex));
                 if (hasFile) {
                     formData.append('file', fileInput.files[0]);
                 }
@@ -1173,6 +1175,9 @@ async def chat_ui():
                     body: formData
                 });
                 const data = await response.json();
+                if (data.local_images && data.local_images.length > 0) {
+                    sessionStorage.setItem('bulinga_photo_index', String(photoIndex + 1));
+                }
                 
                 document.getElementById(thinkingId).remove();
 
@@ -1389,53 +1394,22 @@ def repository_media_url(path):
     return "/api/media?path=" + urllib.parse.quote(path, safe="")
 
 
-def find_bulinga_repository_images(query: str = ""):
-    """Find school photos, preferring filenames/folders matching the user request."""
+def find_bulinga_repository_images(image_index: int = 0):
+    """Return exactly one school photo in the requested fixed sequence."""
     try:
-        branch, paths = get_bulinga_repository_files()
-        image_files = [
-            path for path in paths
-            if path.lower().endswith(IMAGE_EXTENSIONS)
-            and not re.search(r"(^|[/_-])card\d+([_.-]|$)", path.lower())
-        ]
+        _, paths = get_bulinga_repository_files()
+        # These are the only approved school-photo filenames and their exact order.
+        ordered_names = ["1.jpeg"] + [f"{n}.jpg" for n in range(2, 16)] + [f"{n}.jpeg" for n in range(16, 22)]
+        path_by_name = {}
+        for path in sorted(paths, key=str.lower):
+            basename = path.rsplit("/", 1)[-1].lower()
+            if basename in ordered_names and basename not in path_by_name:
+                path_by_name[basename] = path
 
-        # Prefer assets whose names/folders describe the subject the user requested.
-        ignored_terms = {
-            "ifoto", "amafoto", "foto", "photo", "photos", "picture", "pictures",
-            "image", "images", "show", "me", "please", "nyereka", "ndashaka",
-            "bulinga", "btss", "tss", "tvet", "school", "ishuri", "the", "and", "for"
-        }
-        requested_terms = {
-            token for token in re.findall(r"[a-z0-9]+", (query or "").lower())
-            if len(token) > 2 and token not in ignored_terms
-        }
-        matched = []
-        for path in image_files:
-            searchable = re.sub(r"[^a-z0-9]+", " ", path.lower())
-            score = sum(1 for term in requested_terms if term in searchable)
-            if score:
-                matched.append((score, path.lower(), path))
-        if matched:
-            matched.sort(key=lambda item: (-item[0], item[1]))
-            return [repository_media_url(item[2]) for item in matched]
-
-        # If filenames are generic (1.jpg, 2.jpg, ...), return the numbered photo set.
-        numbered = [
-            path for path in image_files
-            if re.fullmatch(r"\d+\.(jpg|jpeg|png|gif|tiff|tif|webp|bmp|avif)",
-                            path.rsplit("/", 1)[-1].lower())
-        ]
-        numbered.sort(key=lambda path: (
-            int(re.match(r"\d+", path.rsplit("/", 1)[-1]).group()),
-            path.lower()
-        ))
-        if numbered:
-            return [repository_media_url(path) for path in numbered]
-
-        school_terms = ("bulinga", "btss", "tss", "tvet", "school", "ishuri")
-        related = [path for path in image_files if any(term in path.lower() for term in school_terms)]
-        related.sort(key=str.lower)
-        return [repository_media_url(path) for path in related]
+        ordered_paths = [path_by_name[name] for name in ordered_names if name in path_by_name]
+        if image_index < 0 or image_index >= len(ordered_paths):
+            return []
+        return [repository_media_url(ordered_paths[image_index])]
     except Exception as error:
         print(f"BULINGA IMAGE SEARCH ERROR: {error}")
         return []
@@ -1447,7 +1421,8 @@ def is_bulinga_photo_request(query: str) -> bool:
         "foto", "amafoto", "ifoto", "photo", "photos", "picture",
         "pictures", "image", "images", "picha", "amashusho",
         "shusho", "isura", "imigaragarire", "appearance", "look",
-        "nyereka", "ndangire", "mwereke", "show me"
+        "shape", "beauty", "beautiful", "ubwiza", "imiterere", "uko isa",
+        "uko risa", "reba", "kureba", "nyereka", "ndangire", "mwereke", "show me"
     )
     school_terms = (
         "bulinga", "btss", "tss", "tvet", "school", "ishuri", "ikigo",
@@ -1628,6 +1603,7 @@ async def download_repository_image(path: str):
 async def chat_endpoint(
     query: str = Form(...),
     response_lang: str = Form("Kinyarwanda"),
+    image_index: int = Form(0),
     file: UploadFile = File(None)
 ):
     try:
@@ -1770,30 +1746,24 @@ async def chat_endpoint(
         # BULINGA TSS image requests: singular asks receive one image;
         # plural asks receive the repository's matching image collection.
         if is_bulinga_photo_request(query):
-            local_images = find_bulinga_repository_images(query)
-            if local_images and not is_plural_photo_request(query):
-                local_images = local_images[:1]
-
+            local_images = find_bulinga_repository_images(max(0, image_index))
             if local_images:
                 if response_lang.lower().startswith("english"):
-                    photo_response = (
-                        "Here is the BULINGA TSS / BULINGA TVET photo you requested. 🏫📸"
-                        if len(local_images) == 1 else
-                        "Here are the BULINGA TSS / BULINGA TVET photos you requested. 🏫📸"
-                    )
+                    photo_response = f"Here is BULINGA TSS photo {image_index + 1}. 🏫📸"
                 else:
-                    photo_response = (
-                        "Dore ifoto ya BULINGA TSS / BULINGA TVET wasabye. 🏫📸"
-                        if len(local_images) == 1 else
-                        "Dore amafoto ya BULINGA TSS / BULINGA TVET wasabye. 🏫📸"
-                    )
+                    photo_response = f"Dore ifoto ya BULINGA TSS nimero {image_index + 1}. 🏫📸"
+            else:
+                if response_lang.lower().startswith("english"):
+                    photo_response = "There are no more photos in the approved BULINGA TSS photo sequence."
+                else:
+                    photo_response = "Nta yandi mafoto asigaye muri uru rutonde rw'amafoto ya BULINGA TSS."
 
-                return JSONResponse({
-                    "response": photo_response,
-                    "local_images": local_images,
-                    "downloads": [],
-                    "generated_img": None
-                })
+            return JSONResponse({
+                "response": photo_response,
+                "local_images": local_images,
+                "downloads": [],
+                "generated_img": None
+            })
 
         # Other questions continue through the existing Groq AI assistant.
         completion = client.chat.completions.create(
