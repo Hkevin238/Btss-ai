@@ -1773,10 +1773,42 @@ async def chat_endpoint(
             })
 
         # Other questions continue through the existing Groq AI assistant.
+        # Browser Search is available, but the model decides whether it is needed.
+        # This keeps ordinary conversation fast while allowing sourced answers
+        # for current events, changing facts, and knowledge questions that benefit
+        # from reliable, verifiable references.
         completion = client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": BULINGA_INFO},
+                {
+                    "role": "system",
+                    "content": (
+                        "WEB SEARCH AND REFERENCE RULES:\n"
+                        "- You have access to the built-in browser_search tool.\n"
+                        "- Do NOT search for ordinary conversation, greetings, simple "
+                        "rewrites/translations, basic arithmetic, or questions you can "
+                        "answer reliably without external information.\n"
+                        "- Use browser_search for current/recent information, changing "
+                        "facts, news, prices, policies, schedules, and factual or educational "
+                        "questions where reliable sources would help the user verify the answer.\n"
+                        "- If you searched the web, finish with a section titled "
+                        "'References' (or the equivalent in the response language).\n"
+                        "- In References, provide the real page/site title as a Markdown "
+                        "link, using only URLs actually returned or visited by browser_search.\n"
+                        "- Never invent, guess, reconstruct, or cite a URL that was not "
+                        "actually supplied by browser_search. Do not cite a source you did "
+                        "not use.\n"
+                        "- Prefer official, primary, and reputable sources. Include only "
+                        "sources that support the answer.\n"
+                        "- If search returns no usable source, do not fabricate references; "
+                        "state briefly that no verifiable source was found.\n"
+                        "- If you did not search, do not add a References section and do "
+                        "not pretend that the answer has been externally verified.\n"
+                        "- Keep answering in the user's requested language and answer "
+                        "the exact question."
+                    )
+                },
                 {
                     "role": "system",
                     "content": (
@@ -1790,9 +1822,14 @@ async def chat_endpoint(
                     "content": f"Respond in {response_lang}. User query: {query}"
                 }
             ],
+            tools=[
+                {"type": "browser_search"}
+            ],
+            tool_choice="auto",
+            citation_options="enabled",
             temperature=0.7
         )
-        ai_response = completion.choices[0].message.content
+        ai_response = completion.choices[0].message.content or ""
 
         return JSONResponse({
             "response": ai_response,
