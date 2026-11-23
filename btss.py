@@ -1335,7 +1335,6 @@ GITHUB_HEADERS = {
 }
 IMAGE_EXTENSIONS = (
     ".jpg", ".jpeg", ".png", ".gif", ".tiff", ".tif",
-    ".webp", ".bmp", ".svg", ".avif", ".ico"
 )
 
 
@@ -1440,7 +1439,7 @@ def is_educard_request(query: str) -> bool:
     terms = (
         "educard", "edu card", "education smart card", "education smartcard",
         "smart card", "smartcard", "smart-card", "edcard", "educare parent",
-        "card y'uburezi", "ikarita y'uburezi", "ikarita y'ishuri",
+        "card y'uburezi", "ikarita y'uburezi", "ikarita y'ishuri","ikarita koranabuhanga"
         "ikarita smart", "student smart card", "school smart card"
     )
     return any(term in text for term in terms)
