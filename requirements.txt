@@ -1,3 +1,4 @@
+
 fastapi
 uvicorn
 groq
@@ -8,3 +9,13 @@ supabase
 python-dotenv
 requests
 openai
+itsdangerous
+httpx
+aiofiles
+email-validator
+Pillow
+bcrypt
+PyJWT
+cryptography
+beautifulsoup4
+google-auth
